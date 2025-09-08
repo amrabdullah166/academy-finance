@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
   Users, 
-  DollarSign, 
   TrendingUp, 
   TrendingDown,
   BookOpen, 
@@ -24,7 +23,7 @@ import {
   Eye
 } from 'lucide-react'
 import Link from 'next/link'
-import { getEnhancedDashboardStats, getRecentPayments, getNotifications, getStudentCourses } from '@/lib/supabase'
+import { getEnhancedDashboardStats, getRecentPayments, getNotifications, getStudentCourses, Payment, Notification } from '@/lib/supabase'
 
 interface DashboardStats {
   totalStudents: number
@@ -60,9 +59,9 @@ export default function Dashboard() {
     overdueSubscriptions: 0
   })
   
-  const [recentPayments, setRecentPayments] = useState<any[]>([])
-  const [recentEnrollments, setRecentEnrollments] = useState<any[]>([])
-  const [notifications, setNotifications] = useState<any[]>([])
+  const [recentPayments, setRecentPayments] = useState<Payment[]>([])
+  const [recentEnrollments, setRecentEnrollments] = useState<Payment[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -93,7 +92,7 @@ export default function Dashboard() {
 
       // Combine recent activities
       const activities: RecentActivity[] = [
-        ...payments?.map((p: any) => ({
+        ...payments?.map((p: Payment & { students?: { name: string } }) => ({
           id: p.id,
           type: 'payment' as const,
           description: `دفعة من ${p.students?.name || 'غير محدد'} - ${p.payment_method === 'monthly_fee' ? 'اشتراك شهري' : 'رسوم أخرى'}`,
@@ -101,7 +100,13 @@ export default function Dashboard() {
           date: p.payment_date,
           status: p.status
         })) || [],
-        ...enrollments?.slice(0, 3).map((e: any) => ({
+        ...enrollments?.slice(0, 3).map((e: { 
+          id: string; 
+          enrollment_date: string; 
+          status: string;
+          students?: { name: string }; 
+          courses?: { name: string } 
+        }) => ({
           id: e.id,
           type: 'enrollment' as const,
           description: `تسجيل ${e.students?.name || 'غير محدد'} في ${e.courses?.name || 'غير محدد'}`,

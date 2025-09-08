@@ -352,7 +352,14 @@ export const getRecentActivities = async (limit = 10) => {
 
     // إضافة التسجيلات
     if (recentEnrollments) {
-      activities.push(...recentEnrollments.map((enrollment: any) => ({
+      activities.push(...recentEnrollments.map((enrollment: { 
+        id: string; 
+        enrollment_date: string; 
+        status: string; 
+        created_at: string;
+        students?: { name: string }; 
+        courses?: { name: string; monthly_fee: number } 
+      }) => ({
         id: `enrollment-${enrollment.id}`,
         type: 'enrollment' as const,
         description: `تسجيل ${enrollment.students?.name || 'غير محدد'} في ${enrollment.courses?.name || 'غير محدد'}`,
@@ -791,7 +798,7 @@ export const getCourseAnalytics = async (courseId: string) => {
     const totalRevenue = payments?.reduce((sum, p) => sum + p.amount, 0) || 0
     
     // Get monthly revenue trend
-    const monthlyRevenue = payments?.reduce((acc: any, payment) => {
+    const monthlyRevenue = payments?.reduce((acc: { [key: string]: number }, payment) => {
       const month = new Date(payment.payment_date).toISOString().slice(0, 7)
       acc[month] = (acc[month] || 0) + payment.amount
       return acc

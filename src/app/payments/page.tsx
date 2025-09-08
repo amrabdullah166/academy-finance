@@ -282,7 +282,7 @@ export default function PaymentsPage() {
                     <Label htmlFor="paymentType">طريقة الدفع</Label>
                     <Select 
                       value={formData.payment_type} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, payment_type: value as any }))}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, payment_type: value as 'cash' | 'bank_transfer' | 'online' | 'check' }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -301,7 +301,7 @@ export default function PaymentsPage() {
                   <Label htmlFor="paymentMethod">نوع الدفعة</Label>
                   <Select 
                     value={formData.payment_method} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, payment_method: value as any }))}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, payment_method: value as 'monthly_fee' | 'registration' | 'materials' | 'penalty' | 'refund' | 'other' }))}
                   >
                     <SelectTrigger>
                       <SelectValue />

@@ -95,7 +95,7 @@ export default function PaymentsPage() {
   }
 
   const filteredPayments = payments.filter(payment => {
-    const studentName = (payment as any).students?.name || 'غير محدد'
+    const studentName = (payment as Payment & { students?: { name: string } }).students?.name || 'غير محدد'
     const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          payment.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())
     
@@ -271,7 +271,7 @@ export default function PaymentsPage() {
                     <Label htmlFor="paymentType">طريقة الدفع</Label>
                     <Select 
                       value={formData.payment_type} 
-                      onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_type: value }))}
+                      onValueChange={(value: string) => setFormData(prev => ({ ...prev, payment_type: value as 'cash' | 'bank_transfer' | 'online' | 'check' }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -290,7 +290,7 @@ export default function PaymentsPage() {
                   <Label htmlFor="paymentMethod">نوع الدفعة</Label>
                   <Select 
                     value={formData.payment_method} 
-                    onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_method: value }))}
+                    onValueChange={(value: string) => setFormData(prev => ({ ...prev, payment_method: value as 'monthly_fee' | 'registration' | 'materials' | 'penalty' | 'refund' | 'other' }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -478,7 +478,7 @@ export default function PaymentsPage() {
                     </TableCell>
                     <TableCell>
                       <p className="font-medium text-slate-800">
-                        {(payment as any).students?.name || 'غير محدد'}
+                        {(payment as Payment & { students?: { name: string } }).students?.name || 'غير محدد'}
                       </p>
                     </TableCell>
                     <TableCell>

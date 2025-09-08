@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Search, Filter, Edit, Trash2, Receipt, Calendar, DollarSign } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Plus, Search, Edit, Trash2, Receipt, Calendar, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -71,10 +71,6 @@ export default function ExpensesPage() {
     loadExpenses()
   }, [])
 
-  useEffect(() => {
-    filterExpenses()
-  }, [expenses, searchTerm, statusFilter, categoryFilter])
-
   const loadExpenses = async () => {
     try {
       const data = await getExpenses()
@@ -86,7 +82,7 @@ export default function ExpensesPage() {
     }
   }
 
-  const filterExpenses = () => {
+  const filterExpenses = useCallback(() => {
     let filtered = expenses
 
     if (searchTerm) {
@@ -106,7 +102,11 @@ export default function ExpensesPage() {
     }
 
     setFilteredExpenses(filtered)
-  }
+  }, [expenses, searchTerm, statusFilter, categoryFilter])
+
+  useEffect(() => {
+    filterExpenses()
+  }, [filterExpenses])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

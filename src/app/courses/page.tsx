@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Edit, Trash2, Users, DollarSign, Calendar, BookOpen, UserPlus, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -73,10 +73,6 @@ export default function CoursesPage() {
     loadData()
   }, [])
 
-  useEffect(() => {
-    filterCourses()
-  }, [courses, searchTerm, statusFilter])
-
   const loadData = async () => {
     try {
       setLoading(true)
@@ -129,7 +125,7 @@ export default function CoursesPage() {
     }
   }
 
-  const filterCourses = () => {
+  const filterCourses = useCallback(() => {
     let filtered = courses
 
     if (searchTerm) {
@@ -144,7 +140,11 @@ export default function CoursesPage() {
     }
 
     setFilteredCourses(filtered)
-  }
+  }, [courses, searchTerm, statusFilter])
+
+  useEffect(() => {
+    filterCourses()
+  }, [filterCourses])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -683,7 +683,7 @@ export default function CoursesPage() {
           <DialogHeader>
             <DialogTitle>تأكيد حذف الكورس</DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من أنك تريد حذف كورس "{courseToDelete?.name}"؟
+              هل أنت متأكد من أنك تريد حذف كورس &quot;{courseToDelete?.name}&quot;؟
               <br />
               <span className="text-red-600 font-medium">
                 سيتم حذف جميع البيانات المرتبطة بهذا الكورس نهائياً.

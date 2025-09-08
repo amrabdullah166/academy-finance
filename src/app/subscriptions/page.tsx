@@ -19,11 +19,10 @@ import {
   Clock,
   ArrowLeft,
   DollarSign,
-  Users,
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { getMonthlySubscriptions, getOverdueSubscriptions, createMonthlySubscription, getStudents, getCourses, updateSubscriptionPayment, createPayment } from '@/lib/supabase'
+import { getMonthlySubscriptions, getOverdueSubscriptions, createMonthlySubscription, getStudents, getCourses, updateSubscriptionPayment, createPayment, Student, Course } from '@/lib/supabase'
 
 interface MonthlySubscription {
   id: string
@@ -45,8 +44,8 @@ interface MonthlySubscription {
 export default function SubscriptionsPageNew() {
   const [subscriptions, setSubscriptions] = useState<MonthlySubscription[]>([])
   const [overdueSubscriptions, setOverdueSubscriptions] = useState<MonthlySubscription[]>([])
-  const [students, setStudents] = useState<any[]>([])
-  const [courses, setCourses] = useState<any[]>([])
+  const [students, setStudents] = useState<Student[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')

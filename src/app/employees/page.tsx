@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Search, Edit, Trash2, Users, Calendar, DollarSign, Phone, Mail } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Plus, Search, Edit, Trash2, Users, DollarSign, Phone, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -72,10 +72,6 @@ export default function EmployeesPage() {
     loadEmployees()
   }, [])
 
-  useEffect(() => {
-    filterEmployees()
-  }, [employees, searchTerm, statusFilter, positionFilter])
-
   const loadEmployees = async () => {
     try {
       const data = await getEmployees()
@@ -87,7 +83,7 @@ export default function EmployeesPage() {
     }
   }
 
-  const filterEmployees = () => {
+  const filterEmployees = useCallback(() => {
     let filtered = employees
 
     if (searchTerm) {
@@ -107,7 +103,11 @@ export default function EmployeesPage() {
     }
 
     setFilteredEmployees(filtered)
-  }
+  }, [employees, searchTerm, statusFilter, positionFilter])
+
+  useEffect(() => {
+    filterEmployees()
+  }, [filterEmployees])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

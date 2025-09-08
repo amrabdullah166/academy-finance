@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,21 +8,17 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { 
-  BarChart3, 
   TrendingUp, 
   TrendingDown,
   DollarSign,
   Users,
-  BookOpen,
-  Calendar,
   ArrowLeft,
   Download,
   Filter,
-  Loader2,
-  Eye
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { getEnhancedDashboardStats, getPayments, getExpenses, getStudents, getCourses, getMonthlySubscriptions } from '@/lib/supabase'
+import { getEnhancedDashboardStats, getPayments, getExpenses, Payment, Expense } from '@/lib/supabase'
 
 interface ReportData {
   totalRevenue: number
@@ -58,11 +54,7 @@ export default function ReportsPageNew() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  useEffect(() => {
-    fetchReportData()
-  }, [dateRange])
-
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -92,13 +84,10 @@ export default function ReportsPageNew() {
           end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
       }
 
-      const [dashboardStats, payments, expenses, students, courses, subscriptions] = await Promise.all([
+      const [dashboardStats, payments, expenses] = await Promise.all([
         getEnhancedDashboardStats(),
         getPayments(),
-        getExpenses(),
-        getStudents(),
-        getCourses(),
-        getMonthlySubscriptions()
+        getExpenses()
       ])
 
       // تصفية البيانات حسب نطاق التاريخ
@@ -118,7 +107,7 @@ export default function ReportsPageNew() {
       const netProfit = totalRevenue - totalExpenses
 
       // تجميع البيانات الشهرية
-      const monthlyData = generateMonthlyData(filteredPayments, filteredExpenses, start, end)
+      const monthlyData = generateMonthlyData(filteredPayments, filteredExpenses)
 
       // تجميع طرق الدفع
       const paymentMethods = generatePaymentMethodsData(filteredPayments)
@@ -144,9 +133,13 @@ export default function ReportsPageNew() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [dateRange, startDate, endDate])
 
-  const generateMonthlyData = (payments: any[], expenses: any[], start: Date, end: Date) => {
+  useEffect(() => {
+    fetchReportData()
+  }, [fetchReportData])
+
+  const generateMonthlyData = (payments: Payment[], expenses: Expense[]) => {
     const monthlyMap = new Map()
     
     // إضافة الإيرادات
@@ -175,7 +168,7 @@ export default function ReportsPageNew() {
     return Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month))
   }
 
-  const generatePaymentMethodsData = (payments: any[]) => {
+  const generatePaymentMethodsData = (payments: Payment[]) => {
     const methodsMap = new Map()
     
     payments.forEach(payment => {
@@ -190,7 +183,7 @@ export default function ReportsPageNew() {
     return Array.from(methodsMap.values()).sort((a, b) => b.amount - a.amount)
   }
 
-  const generateExpenseCategoriesData = (expenses: any[]) => {
+  const generateExpenseCategoriesData = (expenses: Expense[]) => {
     const categoriesMap = new Map()
     
     expenses.forEach(expense => {

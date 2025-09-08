@@ -708,7 +708,7 @@ export default function StudentsPage() {
           <DialogHeader>
             <DialogTitle>تأكيد حذف الطالب</DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من أنك تريد حذف الطالب "{studentToDelete?.name}"؟
+              هل أنت متأكد من أنك تريد حذف الطالب &quot;{studentToDelete?.name}&quot;؟
               <br />
               <span className="text-red-600 font-medium">
                 سيتم حذف جميع البيانات المرتبطة بهذا الطالب نهائياً.
