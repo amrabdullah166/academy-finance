@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,18 +24,32 @@ import {
   Eye
 } from 'lucide-react'
 import Link from 'next/link'
-import { getEnhancedDashboardStats, getRecentPayments, getNotifications, getStudentCourses } from '@/lib/supabase'
+import { 
+  getEnhancedDashboardStats, 
+  getRecentPayments, 
+  getNotifications, 
+  getStudentCourses, 
+  DashboardStats, 
+  Payment as PaymentType, 
+  StudentCourse, 
+  Notification as NotificationType 
+} from '@/lib/supabase'
 
-interface DashboardStats {
-  totalStudents: number
-  activeStudents: number
-  totalCourses: number
-  activeCourses: number
-  monthlyRevenue: number
-  monthlyExpenses: number
-  netProfit: number
-  pendingPayments: number
-  overdueSubscriptions: number
+interface PaymentWithStudent extends PaymentType {
+  students?: {
+    name: string
+    email?: string
+  }
+}
+
+interface EnrollmentWithDetails extends StudentCourse {
+  students?: {
+    name: string
+    email?: string
+  }
+  courses?: {
+    name: string
+  }
 }
 
 interface RecentActivity {
@@ -45,38 +59,6 @@ interface RecentActivity {
   amount?: number
   date: string
   status: string
-}
-
-interface Notification {
-  id: string
-  type: string
-  title: string
-  message: string
-  created_at: string
-  is_read: boolean
-}
-
-interface Payment {
-  id: string
-  amount: number
-  payment_date: string
-  payment_method: string
-  status: string
-  students?: {
-    name: string
-  }
-}
-
-interface Enrollment {
-  id: string
-  enrollment_date: string
-  status: string
-  students?: {
-    name: string
-  }
-  courses?: {
-    name: string
-  }
 }
 
 export default function Dashboard() {
@@ -92,13 +74,13 @@ export default function Dashboard() {
     overdueSubscriptions: 0
   })
   
-  const [recentPayments, setRecentPayments] = useState<Payment[]>([])
-  const [recentEnrollments, setRecentEnrollments] = useState<Enrollment[]>([])
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [recentPayments, setRecentPayments] = useState<PaymentWithStudent[]>([])
+  const [recentEnrollments, setRecentEnrollments] = useState<EnrollmentWithDetails[]>([])
+  const [notifications, setNotifications] = useState<NotificationType[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -121,7 +103,7 @@ export default function Dashboard() {
 
       // Combine recent activities
       const activities: RecentActivity[] = [
-        ...payments?.map((p: Payment) => ({
+        ...payments?.map((p: PaymentWithStudent) => ({
           id: p.id,
           type: 'payment' as const,
           description: `دفعة من ${p.students?.name || 'غير محدد'} - ${p.payment_method === 'monthly_fee' ? 'اشتراك شهري' : 'رسوم أخرى'}`,
@@ -129,7 +111,7 @@ export default function Dashboard() {
           date: p.payment_date,
           status: p.status
         })) || [],
-        ...enrollments?.slice(0, 3).map((e: Enrollment) => ({
+        ...enrollments?.slice(0, 3).map((e: EnrollmentWithDetails) => ({
           id: e.id,
           type: 'enrollment' as const,
           description: `تسجيل ${e.students?.name || 'غير محدد'} في ${e.courses?.name || 'غير محدد'}`,
@@ -145,11 +127,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchDashboardData()
-  }, [])
+  }, [fetchDashboardData])
 
   const getActivityIcon = (type: string) => {
     switch (type) {

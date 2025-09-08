@@ -27,12 +27,22 @@ import {
 import Link from 'next/link'
 import { getPayments, createPayment, getStudents, getCourses, Payment, Student, Course } from '@/lib/supabase'
 
+interface PaymentWithDetails extends Payment {
+  students?: {
+    name: string
+    email?: string
+  }
+  courses?: {
+    name: string
+  }
+}
+
 export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [payments, setPayments] = useState<Payment[]>([])
+  const [payments, setPayments] = useState<PaymentWithDetails[]>([])
   const [students, setStudents] = useState<Student[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
@@ -95,7 +105,7 @@ export default function PaymentsPage() {
   }
 
   const filteredPayments = payments.filter(payment => {
-    const studentName = (payment as any).students?.name || 'غير محدد'
+    const studentName = payment.students?.name || 'غير محدد'
     const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          payment.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())
     
@@ -243,7 +253,7 @@ export default function PaymentsPage() {
                         <SelectValue placeholder="اختر الدورة" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">بدون دورة محددة</SelectItem>
+                        <SelectItem value="none">بدون دورة محددة</SelectItem>
                         {courses.map((course) => (
                           <SelectItem key={course.id} value={course.id}>
                             {course.name}
@@ -271,7 +281,7 @@ export default function PaymentsPage() {
                     <Label htmlFor="paymentType">طريقة الدفع</Label>
                     <Select 
                       value={formData.payment_type} 
-                      onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_type: value }))}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, payment_type: value as any }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -290,7 +300,7 @@ export default function PaymentsPage() {
                   <Label htmlFor="paymentMethod">نوع الدفعة</Label>
                   <Select 
                     value={formData.payment_method} 
-                    onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_method: value }))}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, payment_method: value as any }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -478,7 +488,7 @@ export default function PaymentsPage() {
                     </TableCell>
                     <TableCell>
                       <p className="font-medium text-slate-800">
-                        {(payment as any).students?.name || 'غير محدد'}
+                        {payment.students?.name || 'غير محدد'}
                       </p>
                     </TableCell>
                     <TableCell>

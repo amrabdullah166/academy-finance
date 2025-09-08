@@ -6,6 +6,18 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Database Types
+export interface DashboardStats {
+  totalStudents: number
+  activeStudents: number
+  totalCourses: number
+  activeCourses: number
+  monthlyRevenue: number
+  monthlyExpenses: number
+  netProfit: number
+  pendingPayments: number
+  overdueSubscriptions: number
+}
+
 export interface Student {
   id: string
   name: string
@@ -504,50 +516,6 @@ export const getStudentFinancialSummary = async (studentId: string) => {
   }
 }
 
-// Enhanced Dashboard Statistics
-export const getEnhancedDashboardStats = async () => {
-  try {
-    const [
-      { count: totalStudents },
-      { count: activeStudents },
-      { count: totalCourses },
-      { count: activeCourses },
-      { data: recentPayments },
-      { data: monthlyExpenses },
-      { count: pendingPayments },
-      { count: overdueSubscriptions }
-    ] = await Promise.all([
-      supabase.from('students').select('*', { count: 'exact', head: true }),
-      supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('courses').select('*', { count: 'exact', head: true }),
-      supabase.from('courses').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('payments').select('amount').eq('status', 'completed').gte('payment_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]),
-      supabase.from('expenses').select('amount').eq('status', 'paid').gte('expense_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]),
-      supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('payments').select('*', { count: 'exact', head: true }).eq('status', 'completed').eq('payment_method', 'monthly_fee').lt('payment_date', new Date(new Date().getFullYear(), new Date().getMonth(), 5).toISOString().split('T')[0])
-    ])
-
-    const monthlyRevenue = recentPayments?.reduce((sum, p) => sum + p.amount, 0) || 0
-    const monthlyExpensesTotal = monthlyExpenses?.reduce((sum, e) => sum + e.amount, 0) || 0
-    const netProfit = monthlyRevenue - monthlyExpensesTotal
-
-    return {
-      totalStudents: totalStudents || 0,
-      activeStudents: activeStudents || 0,
-      totalCourses: totalCourses || 0,
-      activeCourses: activeCourses || 0,
-      monthlyRevenue,
-      monthlyExpenses: monthlyExpensesTotal,
-      netProfit,
-      pendingPayments: pendingPayments || 0,
-      overdueSubscriptions: overdueSubscriptions || 0
-    }
-  } catch (error) {
-    console.error('Error fetching enhanced dashboard stats:', error)
-    throw error
-  }
-}
-
 // Dashboard Statistics Functions
 export const getDashboardStats = async () => {
   try {
@@ -605,21 +573,6 @@ export const getDashboardStats = async () => {
     console.error('Error fetching dashboard stats:', error)
     throw error
   }
-}
-
-// Recent Activities Functions
-export const getRecentPayments = async (limit = 5) => {
-  const { data, error } = await supabase
-    .from('payments')
-    .select(`
-      *,
-      students (name)
-    `)
-    .order('payment_date', { ascending: false })
-    .limit(limit)
-  
-  if (error) throw error
-  return data
 }
 
 // Monthly Subscriptions Functions
@@ -693,24 +646,34 @@ export const updateSubscriptionPayment = async (subscriptionId: string, paymentI
 }
 
 // Activities and Notifications Functions
-export const getNotifications = async (userId?: string, isRead?: boolean) => {
-  let query = supabase
-    .from('notifications')
-    .select('*')
-    .order('created_at', { ascending: false })
+export const getNotifications = async (userId?: string, unreadOnly: boolean = true): Promise<Notification[]> => {
+  try {
+    let query = supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10)
 
-  if (userId) {
-    query = query.eq('user_id', userId)
+    if (userId) {
+      query = query.eq('target_user_id', userId)
+    }
+
+    if (unreadOnly) {
+      query = query.eq('is_read', false)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching notifications:', error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('Error in getNotifications:', error)
+    return []
   }
-
-  if (isRead !== undefined) {
-    query = query.eq('is_read', isRead)
-  }
-
-  const { data, error } = await query
-  
-  if (error) throw error
-  return data || []
 }
 
 export const createNotification = async (notification: Omit<Notification, 'id' | 'created_at' | 'is_read'>) => {
@@ -741,4 +704,115 @@ export const getActivities = async (limit = 20) => {
   
   if (error) throw error
   return data
+}
+
+// Enhanced Dashboard Stats Function
+export const getEnhancedDashboardStats = async (): Promise<DashboardStats> => {
+  try {
+    const currentMonth = new Date().getMonth() + 1
+    const currentYear = new Date().getFullYear()
+    const startOfMonth = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1
+    const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear
+    const startOfNextMonth = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`
+
+    const [
+      studentsResult,
+      coursesResult,
+      paymentsResult,
+      expensesResult,
+      subscriptionsResult
+    ] = await Promise.all([
+      supabase.from('students').select('id, status'),
+      supabase.from('courses').select('id, status'),
+      supabase
+        .from('payments')
+        .select('amount, status, payment_date')
+        .gte('payment_date', startOfMonth)
+        .lt('payment_date', startOfNextMonth),
+      supabase
+        .from('expenses')
+        .select('amount, expense_date, status')
+        .gte('expense_date', startOfMonth)
+        .lt('expense_date', startOfNextMonth),
+      supabase
+        .from('monthly_subscriptions')
+        .select('payment_status')
+        .eq('subscription_month', currentMonth)
+        .eq('subscription_year', currentYear)
+    ])
+
+    const students = studentsResult.data || []
+    const courses = coursesResult.data || []
+    const payments = paymentsResult.data || []
+    const expenses = expensesResult.data || []
+    const subscriptions = subscriptionsResult.data || []
+
+    const totalStudents = students.length
+    const activeStudents = students.filter(s => s.status === 'active').length
+    const totalCourses = courses.length
+    const activeCourses = courses.filter(c => c.status === 'active').length
+
+    const monthlyRevenue = payments
+      .filter(p => p.status === 'completed')
+      .reduce((sum, p) => sum + (p.amount || 0), 0)
+
+    const monthlyExpenses = expenses
+      .filter(e => e.status === 'paid')
+      .reduce((sum, e) => sum + (e.amount || 0), 0)
+
+    const netProfit = monthlyRevenue - monthlyExpenses
+    const pendingPayments = payments.filter(p => p.status === 'pending').length
+    const overdueSubscriptions = subscriptions.filter(s => s.payment_status === 'overdue').length
+
+    return {
+      totalStudents,
+      activeStudents,
+      totalCourses,
+      activeCourses,
+      monthlyRevenue,
+      monthlyExpenses,
+      netProfit,
+      pendingPayments,
+      overdueSubscriptions
+    }
+  } catch (error) {
+    console.error('Error getting enhanced dashboard stats:', error)
+    return {
+      totalStudents: 0,
+      activeStudents: 0,
+      totalCourses: 0,
+      activeCourses: 0,
+      monthlyRevenue: 0,
+      monthlyExpenses: 0,
+      netProfit: 0,
+      pendingPayments: 0,
+      overdueSubscriptions: 0
+    }
+  }
+}
+
+// Recent Payments Function
+export const getRecentPayments = async (limit: number = 5): Promise<Payment[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        students:student_id(name, email),
+        courses:course_id(name)
+      `)
+      .order('payment_date', { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      console.error('Error fetching recent payments:', error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('Error in getRecentPayments:', error)
+    return []
+  }
 }

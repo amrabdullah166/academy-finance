@@ -1,502 +1,542 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, DollarSign, TrendingUp, TrendingDown, Download, BarChart3, PieChart } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { getDashboardStats, getPayments, getExpenses } from '@/lib/supabase'
+import { 
+  BarChart3, 
+  TrendingUp, 
+  TrendingDown,
+  DollarSign,
+  Users,
+  BookOpen,
+  Calendar,
+  ArrowLeft,
+  Download,
+  Filter,
+  Loader2,
+  Eye
+} from 'lucide-react'
+import Link from 'next/link'
+import { getEnhancedDashboardStats, getPayments, getExpenses, getStudents, getCourses, getMonthlySubscriptions } from '@/lib/supabase'
 
-interface FinancialData {
+interface ReportData {
   totalRevenue: number
   totalExpenses: number
   netProfit: number
-  monthlyRevenue: { month: string; amount: number }[]
-  monthlyExpenses: { month: string; amount: number }[]
-  expensesByCategory: { category: string; amount: number; count: number }[]
-  revenueByMethod: { method: string; amount: number; count: number }[]
+  totalStudents: number
+  activeStudents: number
+  totalCourses: number
+  activeCourses: number
+  monthlyData: Array<{
+    month: string
+    revenue: number
+    expenses: number
+    profit: number
+  }>
+  paymentMethods: Array<{
+    method: string
+    amount: number
+    count: number
+  }>
+  expenseCategories: Array<{
+    category: string
+    amount: number
+    count: number
+  }>
 }
 
-export default function ReportsPage() {
+export default function ReportsPageNew() {
+  const [reportData, setReportData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [financialData, setFinancialData] = useState<FinancialData>({
-    totalRevenue: 0,
-    totalExpenses: 0,
-    netProfit: 0,
-    monthlyRevenue: [],
-    monthlyExpenses: [],
-    expensesByCategory: [],
-    revenueByMethod: []
-  })
-  
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
-  })
-
-  const [reportType, setReportType] = useState('monthly')
+  const [dateRange, setDateRange] = useState('current_month')
+  const [reportType, setReportType] = useState('financial')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   useEffect(() => {
-    loadFinancialData()
+    fetchReportData()
   }, [dateRange])
 
-  const loadFinancialData = async () => {
-    setLoading(true)
+  const fetchReportData = async () => {
     try {
-      const [payments, expenses] = await Promise.all([
+      setLoading(true)
+      
+      // تحديد نطاق التاريخ
+      let start: Date, end: Date
+      const now = new Date()
+      
+      switch (dateRange) {
+        case 'current_month':
+          start = new Date(now.getFullYear(), now.getMonth(), 1)
+          end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+          break
+        case 'last_month':
+          start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          end = new Date(now.getFullYear(), now.getMonth(), 0)
+          break
+        case 'current_year':
+          start = new Date(now.getFullYear(), 0, 1)
+          end = new Date(now.getFullYear(), 11, 31)
+          break
+        case 'custom':
+          start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), 1)
+          end = endDate ? new Date(endDate) : now
+          break
+        default:
+          start = new Date(now.getFullYear(), now.getMonth(), 1)
+          end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      }
+
+      const [dashboardStats, payments, expenses, students, courses, subscriptions] = await Promise.all([
+        getEnhancedDashboardStats(),
         getPayments(),
-        getExpenses()
+        getExpenses(),
+        getStudents(),
+        getCourses(),
+        getMonthlySubscriptions()
       ])
 
-      // Filter data by date range
-      const filteredPayments = payments.filter(payment => 
-        payment.payment_date >= dateRange.startDate && 
-        payment.payment_date <= dateRange.endDate &&
-        payment.status === 'completed'
-      )
+      // تصفية البيانات حسب نطاق التاريخ
+      const filteredPayments = payments?.filter(p => {
+        const paymentDate = new Date(p.payment_date)
+        return paymentDate >= start && paymentDate <= end && p.status === 'completed'
+      }) || []
 
-      const filteredExpenses = expenses.filter(expense => 
-        expense.expense_date >= dateRange.startDate && 
-        expense.expense_date <= dateRange.endDate &&
-        expense.status === 'paid'
-      )
+      const filteredExpenses = expenses?.filter(e => {
+        const expenseDate = new Date(e.expense_date)
+        return expenseDate >= start && expenseDate <= end && e.status === 'paid'
+      }) || []
 
-      // Calculate totals
-      const totalRevenue = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0)
-      const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      // حساب الإجماليات
+      const totalRevenue = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+      const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0)
       const netProfit = totalRevenue - totalExpenses
 
-      // Monthly revenue
-      const monthlyRevenue = getMonthlyData(filteredPayments, 'payment_date')
-      
-      // Monthly expenses
-      const monthlyExpenses = getMonthlyData(filteredExpenses, 'expense_date')
+      // تجميع البيانات الشهرية
+      const monthlyData = generateMonthlyData(filteredPayments, filteredExpenses, start, end)
 
-      // Expenses by category
-      const expensesByCategory = getExpensesByCategory(filteredExpenses)
+      // تجميع طرق الدفع
+      const paymentMethods = generatePaymentMethodsData(filteredPayments)
 
-      // Revenue by payment method
-      const revenueByMethod = getRevenueByMethod(filteredPayments)
+      // تجميع فئات المصروفات
+      const expenseCategories = generateExpenseCategoriesData(filteredExpenses)
 
-      setFinancialData({
+      setReportData({
         totalRevenue,
         totalExpenses,
         netProfit,
-        monthlyRevenue,
-        monthlyExpenses,
-        expensesByCategory,
-        revenueByMethod
+        totalStudents: dashboardStats.totalStudents,
+        activeStudents: dashboardStats.activeStudents,
+        totalCourses: dashboardStats.totalCourses,
+        activeCourses: dashboardStats.activeCourses,
+        monthlyData,
+        paymentMethods,
+        expenseCategories
       })
 
     } catch (error) {
-      console.error('خطأ في تحميل البيانات المالية:', error)
+      console.error('Error fetching report data:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const getMonthlyData = (data: any[], dateField: string) => {
-    const monthlyData: { [key: string]: number } = {}
+  const generateMonthlyData = (payments: any[], expenses: any[], start: Date, end: Date) => {
+    const monthlyMap = new Map()
     
-    data.forEach(item => {
-      const date = new Date(item[dateField])
-      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`
-      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + item.amount
+    // إضافة الإيرادات
+    payments.forEach(payment => {
+      const month = payment.payment_date.slice(0, 7) // YYYY-MM
+      if (!monthlyMap.has(month)) {
+        monthlyMap.set(month, { month, revenue: 0, expenses: 0, profit: 0 })
+      }
+      monthlyMap.get(month).revenue += payment.amount
     })
 
-    return Object.entries(monthlyData)
-      .map(([month, amount]) => ({ month, amount }))
-      .sort((a, b) => a.month.localeCompare(b.month))
+    // إضافة المصروفات
+    expenses.forEach(expense => {
+      const month = expense.expense_date.slice(0, 7) // YYYY-MM
+      if (!monthlyMap.has(month)) {
+        monthlyMap.set(month, { month, revenue: 0, expenses: 0, profit: 0 })
+      }
+      monthlyMap.get(month).expenses += expense.amount
+    })
+
+    // حساب الربح
+    monthlyMap.forEach(data => {
+      data.profit = data.revenue - data.expenses
+    })
+
+    return Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month))
   }
 
-  const getExpensesByCategory = (expenses: any[]) => {
-    const categoryData: { [key: string]: { amount: number; count: number } } = {}
+  const generatePaymentMethodsData = (payments: any[]) => {
+    const methodsMap = new Map()
+    
+    payments.forEach(payment => {
+      const method = payment.payment_type
+      if (!methodsMap.has(method)) {
+        methodsMap.set(method, { method, amount: 0, count: 0 })
+      }
+      methodsMap.get(method).amount += payment.amount
+      methodsMap.get(method).count += 1
+    })
+
+    return Array.from(methodsMap.values()).sort((a, b) => b.amount - a.amount)
+  }
+
+  const generateExpenseCategoriesData = (expenses: any[]) => {
+    const categoriesMap = new Map()
     
     expenses.forEach(expense => {
       const category = expense.category
-      if (!categoryData[category]) {
-        categoryData[category] = { amount: 0, count: 0 }
+      if (!categoriesMap.has(category)) {
+        categoriesMap.set(category, { category, amount: 0, count: 0 })
       }
-      categoryData[category].amount += expense.amount
-      categoryData[category].count += 1
+      categoriesMap.get(category).amount += expense.amount
+      categoriesMap.get(category).count += 1
     })
 
-    return Object.entries(categoryData)
-      .map(([category, data]) => ({ category, amount: data.amount, count: data.count }))
-      .sort((a, b) => b.amount - a.amount)
+    return Array.from(categoriesMap.values()).sort((a, b) => b.amount - a.amount)
   }
 
-  const getRevenueByMethod = (payments: any[]) => {
-    const methodData: { [key: string]: { amount: number; count: number } } = {}
-    
-    payments.forEach(payment => {
-      const method = payment.payment_method
-      if (!methodData[method]) {
-        methodData[method] = { amount: 0, count: 0 }
-      }
-      methodData[method].amount += payment.amount
-      methodData[method].count += 1
-    })
-
-    return Object.entries(methodData)
-      .map(([method, data]) => ({ method, amount: data.amount, count: data.count }))
-      .sort((a, b) => b.amount - a.amount)
-  }
-
-  const getCategoryLabel = (category: string) => {
-    const categories: { [key: string]: string } = {
-      'salaries': 'رواتب',
-      'rent': 'إيجار',
-      'utilities': 'مرافق عامة',
-      'equipment': 'معدات',
-      'marketing': 'تسويق',
-      'maintenance': 'صيانة',
-      'supplies': 'مستلزمات',
-      'insurance': 'تأمين',
-      'taxes': 'ضرائب',
-      'other': 'أخرى'
+  const getPaymentMethodName = (method: string) => {
+    switch (method) {
+      case 'cash': return 'نقد'
+      case 'bank_transfer': return 'تحويل بنكي'
+      case 'online': return 'دفع إلكتروني'
+      case 'check': return 'شيك'
+      default: return method
     }
-    return categories[category] || category
   }
 
-  const getMethodLabel = (method: string) => {
-    const methods: { [key: string]: string } = {
-      'monthly_fee': 'رسوم شهرية',
-      'registration': 'رسوم تسجيل',
-      'materials': 'مواد دراسية',
-      'penalty': 'غرامة',
-      'refund': 'استرداد',
-      'other': 'أخرى'
+  const getCategoryName = (category: string) => {
+    switch (category) {
+      case 'salaries': return 'رواتب'
+      case 'rent': return 'إيجار'
+      case 'utilities': return 'مرافق عامة'
+      case 'equipment': return 'معدات'
+      case 'marketing': return 'تسويق'
+      case 'maintenance': return 'صيانة'
+      case 'supplies': return 'مستلزمات'
+      case 'insurance': return 'تأمين'
+      case 'taxes': return 'ضرائب'
+      case 'other': return 'أخرى'
+      default: return category
     }
-    return methods[method] || method
   }
 
-  const exportReport = () => {
-    // Here you would implement PDF/Excel export functionality
-    alert('سيتم تطوير وظيفة التصدير قريباً')
-  }
-
-  const formatMonth = (monthStr: string) => {
+  const getMonthName = (monthStr: string) => {
     const [year, month] = monthStr.split('-')
-    const monthNames = [
+    const months = [
       'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
       'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
     ]
-    return `${monthNames[parseInt(month) - 1]} ${year}`
+    return `${months[parseInt(month) - 1]} ${year}`
+  }
+
+  const exportToCSV = () => {
+    if (!reportData) return
+
+    let csvContent = 'التقرير المالي\n\n'
+    
+    // الملخص المالي
+    csvContent += 'الملخص المالي\n'
+    csvContent += `إجمالي الإيرادات,${reportData.totalRevenue}\n`
+    csvContent += `إجمالي المصروفات,${reportData.totalExpenses}\n`
+    csvContent += `صافي الربح,${reportData.netProfit}\n\n`
+
+    // البيانات الشهرية
+    csvContent += 'البيانات الشهرية\n'
+    csvContent += 'الشهر,الإيرادات,المصروفات,الربح\n'
+    reportData.monthlyData.forEach(data => {
+      csvContent += `${getMonthName(data.month)},${data.revenue},${data.expenses},${data.profit}\n`
+    })
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `financial-report-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">جاري تحميل التقارير...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-xl text-slate-600">جاري تحميل بيانات التقارير...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8" dir="rtl">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">التقارير المالية</h1>
-          <p className="text-muted-foreground">تحليل شامل للوضع المالي للأكاديمية</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4 ml-2" />
+                العودة للرئيسية
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mb-2">
+                التقارير المالية
+              </h1>
+              <p className="text-slate-600 text-lg">
+                تحليل شامل للأداء المالي والإحصائيات
+              </p>
+            </div>
+          </div>
+          <Button onClick={exportToCSV} size="lg">
+            <Download className="h-4 w-4 ml-2" />
+            تصدير التقرير
+          </Button>
         </div>
-        
-        <Button onClick={exportReport}>
-          <Download className="ml-2 h-4 w-4" />
-          تصدير التقرير
-        </Button>
       </div>
 
-      {/* Date Range Filters */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1">
-              <Label htmlFor="startDate">من تاريخ</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={dateRange.startDate}
-                onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
-              />
-            </div>
-            
-            <div className="flex-1">
-              <Label htmlFor="endDate">إلى تاريخ</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={dateRange.endDate}
-                onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
-              />
-            </div>
-            
-            <div className="flex-1">
-              <Label htmlFor="reportType">نوع التقرير</Label>
+      {/* Filters */}
+      <Card className="bg-white/80 backdrop-blur-sm border-slate-200 mb-6">
+        <CardHeader>
+          <CardTitle>تصفية التقرير</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>نوع التقرير</Label>
               <Select value={reportType} onValueChange={setReportType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">شهري</SelectItem>
-                  <SelectItem value="quarterly">ربع سنوي</SelectItem>
-                  <SelectItem value="yearly">سنوي</SelectItem>
+                  <SelectItem value="financial">مالي</SelectItem>
+                  <SelectItem value="students">الطلاب</SelectItem>
+                  <SelectItem value="courses">الدورات</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            <Button onClick={loadFinancialData}>
-              تحديث التقرير
-            </Button>
+            <div className="space-y-2">
+              <Label>نطاق التاريخ</Label>
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current_month">الشهر الحالي</SelectItem>
+                  <SelectItem value="last_month">الشهر الماضي</SelectItem>
+                  <SelectItem value="current_year">السنة الحالية</SelectItem>
+                  <SelectItem value="custom">نطاق مخصص</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {dateRange === 'custom' && (
+              <>
+                <div className="space-y-2">
+                  <Label>من تاريخ</Label>
+                  <Input 
+                    type="date" 
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>إلى تاريخ</Label>
+                  <Input 
+                    type="date" 
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
           </div>
+          {dateRange === 'custom' && (
+            <div className="mt-4">
+              <Button onClick={fetchReportData}>
+                <Filter className="h-4 w-4 ml-2" />
+                تطبيق الفلتر
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الإيرادات</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {financialData.totalRevenue.toLocaleString()} ر.س
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي المصروفات</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {financialData.totalExpenses.toLocaleString()} ر.س
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">صافي الربح</CardTitle>
-            <DollarSign className={`h-4 w-4 ${financialData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${financialData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {financialData.netProfit.toLocaleString()} ر.س
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {financialData.netProfit >= 0 ? 'ربح' : 'خسارة'}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">هامش الربح</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {financialData.totalRevenue > 0 ? 
-                ((financialData.netProfit / financialData.totalRevenue) * 100).toFixed(1) : 0}%
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Detailed Reports */}
-      <Tabs defaultValue="monthly" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="monthly">التقرير الشهري</TabsTrigger>
-          <TabsTrigger value="categories">تحليل المصروفات</TabsTrigger>
-          <TabsTrigger value="revenue">تحليل الإيرادات</TabsTrigger>
-          <TabsTrigger value="comparison">المقارنات</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="monthly">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>الإيرادات الشهرية</CardTitle>
-                <CardDescription>تطور الإيرادات عبر الأشهر</CardDescription>
+      {reportData && (
+        <>
+          {/* Financial Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  إجمالي الإيرادات
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>الشهر</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {financialData.monthlyRevenue.map((item) => (
-                      <TableRow key={item.month}>
-                        <TableCell>{formatMonth(item.month)}</TableCell>
-                        <TableCell className="text-green-600 font-medium">
-                          {item.amount.toLocaleString()} ر.س
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="text-2xl font-bold text-green-600">
+                  {reportData.totalRevenue.toLocaleString()} ر.س
+                </div>
+                <p className="text-xs text-slate-600">خلال الفترة المحددة</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>المصروفات الشهرية</CardTitle>
-                <CardDescription>تطور المصروفات عبر الأشهر</CardDescription>
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  إجمالي المصروفات
+                </CardTitle>
+                <TrendingDown className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>الشهر</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {financialData.monthlyExpenses.map((item) => (
-                      <TableRow key={item.month}>
-                        <TableCell>{formatMonth(item.month)}</TableCell>
-                        <TableCell className="text-red-600 font-medium">
-                          {item.amount.toLocaleString()} ر.س
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="text-2xl font-bold text-red-600">
+                  {reportData.totalExpenses.toLocaleString()} ر.س
+                </div>
+                <p className="text-xs text-slate-600">خلال الفترة المحددة</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  صافي الربح
+                </CardTitle>
+                <DollarSign className={`h-4 w-4 ${reportData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${reportData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {reportData.netProfit.toLocaleString()} ر.س
+                </div>
+                <p className="text-xs text-slate-600">
+                  {reportData.netProfit >= 0 ? 'ربح' : 'خسارة'} صافية
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  الطلاب النشطون
+                </CardTitle>
+                <Users className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-800">
+                  {reportData.activeStudents}
+                </div>
+                <p className="text-xs text-slate-600">
+                  من أصل {reportData.totalStudents} طالب
+                </p>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
 
-        <TabsContent value="categories">
-          <Card>
+          {/* Monthly Trend */}
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 mb-6">
             <CardHeader>
-              <CardTitle>تحليل المصروفات حسب الفئة</CardTitle>
-              <CardDescription>توزيع المصروفات على الفئات المختلفة</CardDescription>
+              <CardTitle>الاتجاه الشهري</CardTitle>
+              <CardDescription>مقارنة الإيرادات والمصروفات على مدار الفترة</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الفئة</TableHead>
-                    <TableHead>المبلغ</TableHead>
-                    <TableHead>عدد المعاملات</TableHead>
-                    <TableHead>النسبة</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {financialData.expensesByCategory.map((item) => (
-                    <TableRow key={item.category}>
-                      <TableCell>{getCategoryLabel(item.category)}</TableCell>
-                      <TableCell className="font-medium">
-                        {item.amount.toLocaleString()} ر.س
-                      </TableCell>
-                      <TableCell>{item.count}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {((item.amount / financialData.totalExpenses) * 100).toFixed(1)}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-right py-2">الشهر</th>
+                      <th className="text-right py-2">الإيرادات</th>
+                      <th className="text-right py-2">المصروفات</th>
+                      <th className="text-right py-2">صافي الربح</th>
+                      <th className="text-right py-2">النسبة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportData.monthlyData.map((data, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="py-2 font-medium">{getMonthName(data.month)}</td>
+                        <td className="py-2 text-green-600">{data.revenue.toLocaleString()} ر.س</td>
+                        <td className="py-2 text-red-600">{data.expenses.toLocaleString()} ر.س</td>
+                        <td className={`py-2 ${data.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {data.profit.toLocaleString()} ر.س
+                        </td>
+                        <td className="py-2">
+                          <Badge variant={data.profit >= 0 ? 'default' : 'destructive'} className="text-xs">
+                            {data.revenue > 0 ? ((data.profit / data.revenue) * 100).toFixed(1) : 0}%
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Methods & Expense Categories */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+              <CardHeader>
+                <CardTitle>طرق الدفع</CardTitle>
+                <CardDescription>توزيع الإيرادات حسب طريقة الدفع</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {reportData.paymentMethods.map((method, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{getPaymentMethodName(method.method)}</p>
+                        <p className="text-sm text-slate-600">{method.count} دفعة</p>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-green-600">{method.amount.toLocaleString()} ر.س</p>
+                        <p className="text-xs text-slate-500">
+                          {reportData.totalRevenue > 0 ? ((method.amount / reportData.totalRevenue) * 100).toFixed(1) : 0}%
+                        </p>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                </div>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="revenue">
-          <Card>
-            <CardHeader>
-              <CardTitle>تحليل الإيرادات حسب نوع الدفع</CardTitle>
-              <CardDescription>توزيع الإيرادات على طرق الدفع المختلفة</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>نوع الدفع</TableHead>
-                    <TableHead>المبلغ</TableHead>
-                    <TableHead>عدد المعاملات</TableHead>
-                    <TableHead>النسبة</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {financialData.revenueByMethod.map((item) => (
-                    <TableRow key={item.method}>
-                      <TableCell>{getMethodLabel(item.method)}</TableCell>
-                      <TableCell className="font-medium">
-                        {item.amount.toLocaleString()} ر.س
-                      </TableCell>
-                      <TableCell>{item.count}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {((item.amount / financialData.totalRevenue) * 100).toFixed(1)}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-200">
+              <CardHeader>
+                <CardTitle>فئات المصروفات</CardTitle>
+                <CardDescription>توزيع المصروفات حسب الفئة</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {reportData.expenseCategories.map((category, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{getCategoryName(category.category)}</p>
+                        <p className="text-sm text-slate-600">{category.count} مصروف</p>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-red-600">{category.amount.toLocaleString()} ر.س</p>
+                        <p className="text-xs text-slate-500">
+                          {reportData.totalExpenses > 0 ? ((category.amount / reportData.totalExpenses) * 100).toFixed(1) : 0}%
+                        </p>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="comparison">
-          <Card>
-            <CardHeader>
-              <CardTitle>مقارنة الإيرادات والمصروفات</CardTitle>
-              <CardDescription>مقارنة شهرية بين الإيرادات والمصروفات</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الشهر</TableHead>
-                    <TableHead>الإيرادات</TableHead>
-                    <TableHead>المصروفات</TableHead>
-                    <TableHead>صافي الربح/الخسارة</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {financialData.monthlyRevenue.map((revenueItem) => {
-                    const expenseItem = financialData.monthlyExpenses.find(
-                      e => e.month === revenueItem.month
-                    )
-                    const netAmount = revenueItem.amount - (expenseItem?.amount || 0)
-                    
-                    return (
-                      <TableRow key={revenueItem.month}>
-                        <TableCell>{formatMonth(revenueItem.month)}</TableCell>
-                        <TableCell className="text-green-600 font-medium">
-                          {revenueItem.amount.toLocaleString()} ر.س
-                        </TableCell>
-                        <TableCell className="text-red-600 font-medium">
-                          {(expenseItem?.amount || 0).toLocaleString()} ر.س
-                        </TableCell>
-                        <TableCell className={`font-medium ${netAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {netAmount.toLocaleString()} ر.س
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -95,7 +95,7 @@ export default function PaymentsPage() {
   }
 
   const filteredPayments = payments.filter(payment => {
-    const studentName = payment.students?.name || 'غير محدد'
+    const studentName = (payment as any).students?.name || 'غير محدد'
     const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          payment.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())
     
@@ -271,7 +271,7 @@ export default function PaymentsPage() {
                     <Label htmlFor="paymentType">طريقة الدفع</Label>
                     <Select 
                       value={formData.payment_type} 
-                      onValueChange={(value: string) => setFormData(prev => ({ ...prev, payment_type: value }))}
+                      onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_type: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -290,7 +290,7 @@ export default function PaymentsPage() {
                   <Label htmlFor="paymentMethod">نوع الدفعة</Label>
                   <Select 
                     value={formData.payment_method} 
-                    onValueChange={(value: string) => setFormData(prev => ({ ...prev, payment_method: value }))}
+                    onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_method: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -478,7 +478,7 @@ export default function PaymentsPage() {
                     </TableCell>
                     <TableCell>
                       <p className="font-medium text-slate-800">
-                        {payment.students?.name || 'غير محدد'}
+                        {(payment as any).students?.name || 'غير محدد'}
                       </p>
                     </TableCell>
                     <TableCell>

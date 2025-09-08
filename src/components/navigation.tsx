@@ -34,13 +34,13 @@ const navigationItems = [
     icon: BookOpen
   },
   {
-    name: 'المدفوعات المحدثة',
-    href: '/payments/page-new',
+    name: 'المدفوعات',
+    href: '/payments',
     icon: CreditCard
   },
   {
     name: 'الاشتراكات الشهرية',
-    href: '/subscriptions/page-new',
+    href: '/subscriptions',
     icon: Calendar
   },
   {
@@ -55,7 +55,7 @@ const navigationItems = [
   },
   {
     name: 'التقارير المالية',
-    href: '/reports/page-new',
+    href: '/reports',
     icon: BarChart3
   }
 ]
