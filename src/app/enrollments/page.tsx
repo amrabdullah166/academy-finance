@@ -62,9 +62,15 @@ export default function EnrollmentsPage() {
         getCourses(),
         getStudentCourses()
       ])
-      setStudents(studentsData.filter(s => s.status === 'active'))
-      setCourses(coursesData.filter(c => c.status === 'active'))
-      setEnrollments(enrollmentsData)
+      
+      // Ensure data is arrays
+      const students = Array.isArray(studentsData) ? studentsData : []
+      const courses = Array.isArray(coursesData) ? coursesData : []
+      const enrollments = Array.isArray(enrollmentsData) ? enrollmentsData : []
+      
+      setStudents(students.filter(s => s.status === 'active'))
+      setCourses(courses.filter(c => c.status === 'active'))
+      setEnrollments(enrollments)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {

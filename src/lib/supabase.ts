@@ -1,9 +1,75 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase environment variables are not set. Using fallback configuration.')
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://fallback.supabase.co', 
+  supabaseAnonKey || 'fallback-key'
+)
+
+// Helper function to check if Supabase is properly configured
+const isSupabaseConfigured = () => {
+  return Boolean(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://fallback.supabase.co')
+}
+
+// Safe wrapper for Supabase operations
+const safeSupabaseOperation = async <T = unknown>(operation: () => Promise<T>, fallbackType: string = 'default'): Promise<T> => {
+  if (!isSupabaseConfigured()) {
+    return getMockData(fallbackType) as T
+  }
+  
+  try {
+    const result = await operation()
+    return result || getMockData(fallbackType) as T
+  } catch (error) {
+    console.error('Supabase operation failed:', error)
+    return getMockData(fallbackType) as T
+  }
+}
+
+// Mock data for when Supabase is not available
+const getMockData = (type: string) => {
+  console.warn(`Using mock data for ${type} - Supabase not configured`)
+  switch (type) {
+    case 'students':
+      return []
+    case 'courses':
+      return []
+    case 'payments':
+      return []
+    case 'expenses':
+      return []
+    case 'employees':
+      return []
+    case 'enrollments':
+      return []
+    case 'subscriptions':
+      return []
+    case 'notifications':
+      return []
+    case 'activities':
+      return []
+    case 'stats':
+      return {
+        totalStudents: 0,
+        activeStudents: 0,
+        totalCourses: 0,
+        activeCourses: 0,
+        monthlyRevenue: 0,
+        monthlyExpenses: 0,
+        netProfit: 0,
+        pendingPayments: 0,
+        overdueSubscriptions: 0
+      }
+    default:
+      return []
+  }
+}
 
 // Database Types
 export interface DashboardStats {
@@ -149,13 +215,15 @@ export interface Notification {
 
 // Students Functions
 export const getStudents = async () => {
-  const { data, error } = await supabase
-    .from('students')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data
+  return safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('students')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }, 'students')
 }
 
 export const createStudent = async (student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) => {
@@ -296,7 +364,7 @@ export const deleteStudent = async (studentId: string) => {
 
 // Activity Functions - إضافة جديدة
 export const getRecentActivities = async (limit = 10) => {
-  try {
+  return safeSupabaseOperation(async () => {
     // جلب آخر المدفوعات مع أسماء الطلاب
     const { data: recentPayments, error: paymentsError } = await supabase
       .from('payments')
@@ -382,11 +450,7 @@ export const getRecentActivities = async (limit = 10) => {
     return activities
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, limit)
-
-  } catch (error) {
-    console.error('خطأ في جلب النشاطات الأخيرة:', error)
-    return []
-  }
+  }, 'activities')
 }
 
 const getPaymentMethodName = (method: string) => {
@@ -426,16 +490,18 @@ export const createActivity = async (activity: {
   }
 }
 export const getPayments = async () => {
-  const { data, error } = await supabase
-    .from('payments')
-    .select(`
-      *,
-      students (name)
-    `)
-    .order('payment_date', { ascending: false })
-  
-  if (error) throw error
-  return data
+  return safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        students (name)
+      `)
+      .order('payment_date', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }, 'payments')
 }
 
 export const createPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'updated_at' | 'receipt_number'>) => {
@@ -476,13 +542,15 @@ export const deletePayment = async (id: string) => {
 
 // Expenses Functions
 export const getExpenses = async () => {
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .order('expense_date', { ascending: false })
-  
-  if (error) throw error
-  return data
+  return safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .order('expense_date', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }, 'expenses')
 }
 
 export const createExpense = async (expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>) => {
@@ -497,13 +565,15 @@ export const createExpense = async (expense: Omit<Expense, 'id' | 'created_at' |
 
 // Courses Functions
 export const getCourses = async () => {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data
+  return safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }, 'courses')
 }
 
 export const createCourse = async (course: Omit<Course, 'id' | 'created_at' | 'updated_at'>) => {
@@ -628,13 +698,15 @@ export const deleteCourse = async (courseId: string) => {
 
 // Employees Functions
 export const getEmployees = async () => {
-  const { data, error } = await supabase
-    .from('employees')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  if (error) throw error
-  return data
+  return safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }, 'employees')
 }
 
 export const createEmployee = async (employee: Omit<Employee, 'id' | 'created_at' | 'updated_at'>) => {
@@ -693,17 +765,19 @@ export const deleteEmployee = async (id: string) => {
 
 // Student-Courses Relationship Functions
 export const getStudentCourses = async () => {
-  const { data, error } = await supabase
-    .from('student_courses')
-    .select(`
-      *,
-      students (id, name, email, phone, status),
-      courses (id, name, monthly_fee, status)
-    `)
-    .order('enrollment_date', { ascending: false })
-  
-  if (error) throw error
-  return data
+  return safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('student_courses')
+      .select(`
+        *,
+        students (id, name, email, phone, status),
+        courses (id, name, monthly_fee, status)
+      `)
+      .order('enrollment_date', { ascending: false })
+    
+    if (error) throw error
+    return data
+  }, 'enrollments')
 }
 
 export const enrollStudentInCourse = async (studentId: string, courseId: string) => {
@@ -1015,7 +1089,7 @@ export const updateSubscriptionPayment = async (subscriptionId: string, paymentI
 
 // Activities and Notifications Functions
 export const getNotifications = async (userId?: string, unreadOnly: boolean = true): Promise<Notification[]> => {
-  try {
+  return safeSupabaseOperation(async () => {
     let query = supabase
       .from('notifications')
       .select('*')
@@ -1032,16 +1106,9 @@ export const getNotifications = async (userId?: string, unreadOnly: boolean = tr
 
     const { data, error } = await query
 
-    if (error) {
-      console.error('Error fetching notifications:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('Error in getNotifications:', error)
-    return []
-  }
+    if (error) throw error
+    return data
+  }, 'notifications')
 }
 
 export const createNotification = async (notification: Omit<Notification, 'id' | 'created_at' | 'is_read'>) => {
@@ -1076,6 +1143,10 @@ export const getActivities = async (limit = 20) => {
 
 // Enhanced Dashboard Stats Function
 export const getEnhancedDashboardStats = async (): Promise<DashboardStats> => {
+  if (!isSupabaseConfigured()) {
+    return getMockData('stats') as DashboardStats
+  }
+  
   try {
     const currentMonth = new Date().getMonth() + 1
     const currentYear = new Date().getFullYear()
@@ -1146,17 +1217,7 @@ export const getEnhancedDashboardStats = async (): Promise<DashboardStats> => {
     }
   } catch (error) {
     console.error('Error getting enhanced dashboard stats:', error)
-    return {
-      totalStudents: 0,
-      activeStudents: 0,
-      totalCourses: 0,
-      activeCourses: 0,
-      monthlyRevenue: 0,
-      monthlyExpenses: 0,
-      netProfit: 0,
-      pendingPayments: 0,
-      overdueSubscriptions: 0
-    }
+    return getMockData('stats') as DashboardStats
   }
 }
 

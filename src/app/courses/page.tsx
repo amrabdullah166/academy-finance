@@ -12,30 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { getCourses, createCourse, updateCourse, getStudents, getPayments, getStudentCourses, deleteCourse } from '@/lib/supabase'
-
-interface Course {
-  id: string
-  name: string
-  description?: string
-  monthly_fee: number
-  total_sessions?: number
-  status: string
-  instructor_id?: string
-  start_date?: string
-  end_date?: string
-  max_students?: number
-  created_at: string
-  updated_at: string
-}
-
-interface Student {
-  id: string
-  name: string
-  email?: string
-  phone?: string
-  status: string
-}
+import { getCourses, createCourse, updateCourse, getStudents, getPayments, getStudentCourses, deleteCourse, type Course, type Student, type Payment, type StudentCourse } from '@/lib/supabase'
 
 interface CourseWithStats extends Course {
   enrolled_students: number
@@ -83,15 +60,21 @@ export default function CoursesPage() {
         getStudentCourses()
       ])
       
+      // Ensure coursesData is an array
+      const courses = Array.isArray(coursesData) ? coursesData as unknown as Course[] : []
+      const students = Array.isArray(studentsData) ? studentsData as unknown as Student[] : []
+      const payments = Array.isArray(paymentsData) ? paymentsData as unknown as Payment[] : []
+      const studentCourses = Array.isArray(studentCoursesData) ? studentCoursesData as unknown as StudentCourse[] : []
+      
       // Calculate stats for each course
-      const coursesWithStats = coursesData.map(course => {
+      const coursesWithStats = courses.map(course => {
         // Count students actually enrolled in this specific course
-        const enrolledStudents = studentCoursesData.filter(sc => 
+        const enrolledStudents = studentCourses.filter(sc => 
           sc.course_id === course.id && sc.status === 'enrolled'
         ).length
         
         // Calculate revenue from payments for this course
-        const coursePayments = paymentsData.filter(p => 
+        const coursePayments = payments.filter(p => 
           p.course_id === course.id && 
           p.status === 'completed' &&
           p.payment_method === 'monthly_fee'
@@ -116,7 +99,7 @@ export default function CoursesPage() {
       })
       
       setCourses(coursesWithStats)
-      setStudents(studentsData.filter(s => s.status === 'active'))
+      setStudents(students.filter(s => s.status === 'active'))
       
     } catch (error) {
       console.error('خطأ في تحميل البيانات:', error)
