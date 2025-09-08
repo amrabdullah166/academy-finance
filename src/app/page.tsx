@@ -29,6 +29,7 @@ import {
   getRecentPayments, 
   getNotifications, 
   getStudentCourses, 
+  getRecentActivities,
   DashboardStats, 
   Payment as PaymentType, 
   StudentCourse, 
@@ -88,39 +89,21 @@ export default function Dashboard() {
         dashboardStats,
         payments,
         enrollments,
-        notifs
+        notifs,
+        activities
       ] = await Promise.all([
         getEnhancedDashboardStats(),
         getRecentPayments(5),
         getStudentCourses(),
-        getNotifications(undefined, false)
+        getNotifications(undefined, false),
+        getRecentActivities(8)
       ])
 
       setStats(dashboardStats)
       setRecentPayments(payments || [])
       setRecentEnrollments(enrollments?.slice(0, 5) || [])
       setNotifications(notifs || [])
-
-      // Combine recent activities
-      const activities: RecentActivity[] = [
-        ...payments?.map((p: PaymentWithStudent) => ({
-          id: p.id,
-          type: 'payment' as const,
-          description: `دفعة من ${p.students?.name || 'غير محدد'} - ${p.payment_method === 'monthly_fee' ? 'اشتراك شهري' : 'رسوم أخرى'}`,
-          amount: p.amount,
-          date: p.payment_date,
-          status: p.status
-        })) || [],
-        ...enrollments?.slice(0, 3).map((e: EnrollmentWithDetails) => ({
-          id: e.id,
-          type: 'enrollment' as const,
-          description: `تسجيل ${e.students?.name || 'غير محدد'} في ${e.courses?.name || 'غير محدد'}`,
-          date: e.enrollment_date,
-          status: e.status
-        })) || []
-      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8)
-
-      setRecentActivities(activities)
+      setRecentActivities(activities || [])
 
     } catch (error) {
       console.error('خطأ في تحميل بيانات لوحة التحكم:', error)
@@ -291,7 +274,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {stats.monthlyRevenue.toLocaleString()} ر.س
+                {stats.monthlyRevenue.toLocaleString()} دينار
               </div>
               <p className="text-xs text-muted-foreground">
                 هذا الشهر
@@ -317,7 +300,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${stats.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.netProfit.toLocaleString()} ر.س
+              {stats.netProfit.toLocaleString()} دينار
             </div>
             <p className="text-xs text-muted-foreground">
               الإيرادات - المصروفات
@@ -352,36 +335,49 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {getActivityIcon(activity.type)}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(activity.date).toLocaleDateString('ar-SA')}
-                        </p>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivities.map((activity) => (
+                    <div key={activity.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {getActivityIcon(activity.type)}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{activity.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(activity.date).toLocaleDateString('ar-SA', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between sm:justify-end gap-2">
+                        {activity.amount && activity.amount > 0 && (
+                          <span className="text-sm font-medium whitespace-nowrap">
+                            {activity.amount.toLocaleString()} دينار
+                          </span>
+                        )}
+                        {getStatusBadge(activity.status, activity.type)}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-2">
-                      {activity.amount && (
-                        <span className="text-sm font-medium whitespace-nowrap">
-                          {activity.amount.toLocaleString()} ر.س
-                        </span>
-                      )}
-                      {getStatusBadge(activity.status, activity.type)}
+                  ))}
+                  
+                  {recentActivities.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>لا توجد أنشطة حديثة</p>
+                      <p className="text-sm">ستظهر الأنشطة هنا عند إضافة مدفوعات أو تسجيل طلاب</p>
                     </div>
-                  </div>
-                ))}
-                
-                {recentActivities.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">لا توجد أنشطة حديثة</p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -12,7 +12,8 @@ import {
   Calendar,
   BookOpen,
   Menu,
-  X
+  X,
+  Settings
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -62,6 +63,11 @@ const navigationItems = [
     name: 'التقارير المالية',
     href: '/reports',
     icon: BarChart3
+  },
+  {
+    name: 'الإعدادات',
+    href: '/settings',
+    icon: Settings
   }
 ]
 
@@ -128,11 +134,11 @@ export default function Navigation() {
       {!isDesktop && (
         <div>
           {/* Mobile Header */}
-          <div className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center z-50">
+          <div className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center z-50 shadow-sm">
             <h1 className="text-lg font-semibold text-gray-900">بساط العلم</h1>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-md hover:bg-gray-100"
+              className="p-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -142,11 +148,11 @@ export default function Navigation() {
           {isMobileMenuOpen && (
             <>
               <div 
-                className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                className="fixed inset-0 mobile-overlay z-40 transition-all duration-300 ease-out"
                 onClick={() => setIsMobileMenuOpen(false)}
               />
-              <div className="fixed top-0 right-0 w-80 h-full bg-white shadow-xl z-50">
-                <div className="p-6 border-b border-gray-200">
+              <div className="fixed top-0 right-0 w-80 h-full mobile-menu z-50 transform transition-all duration-300 ease-out overflow-y-auto">
+                <div className="p-6 border-b border-gray-200 bg-gray-50">
                   <div className="flex justify-between items-center">
                     <div>
                       <h1 className="text-xl font-bold text-gray-900">أكاديمية بساط العلم</h1>
@@ -154,9 +160,9 @@ export default function Navigation() {
                     </div>
                     <button
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="p-2 rounded-md hover:bg-gray-100"
+                      className="p-2 rounded-md hover:bg-gray-200 transition-colors"
                     >
-                      <X className="h-5 w-5" />
+                      <X className="h-5 w-5 text-gray-600" />
                     </button>
                   </div>
                 </div>

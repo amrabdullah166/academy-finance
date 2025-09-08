@@ -398,7 +398,7 @@ export default function EmployeesPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSalaries.toLocaleString()} ر.س</div>
+            <div className="text-2xl font-bold">{totalSalaries.toLocaleString()} دينار</div>
             <p className="text-xs text-muted-foreground">شهرياً</p>
           </CardContent>
         </Card>
@@ -410,7 +410,7 @@ export default function EmployeesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {activeEmployees > 0 ? (totalSalaries / activeEmployees).toLocaleString() : 0} ر.س
+              {activeEmployees > 0 ? (totalSalaries / activeEmployees).toLocaleString() : 0} دينار
             </div>
           </CardContent>
         </Card>
@@ -504,7 +504,7 @@ export default function EmployeesPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{employee.salary.toLocaleString()} ر.س</TableCell>
+                  <TableCell>{employee.salary.toLocaleString()} دينار</TableCell>
                   <TableCell>
                     {new Date(employee.hire_date).toLocaleDateString('ar-SA')}
                   </TableCell>

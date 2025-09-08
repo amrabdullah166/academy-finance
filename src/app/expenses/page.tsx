@@ -342,7 +342,7 @@ export default function ExpensesPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalExpenses.toLocaleString()} ر.س</div>
+            <div className="text-2xl font-bold">{totalExpenses.toLocaleString()} دينار</div>
             <p className="text-xs text-muted-foreground">
               من {filteredExpenses.length} مصروف
             </p>
@@ -363,7 +363,7 @@ export default function ExpensesPage() {
                   return expenseMonth === currentMonth
                 })
                 .reduce((sum, expense) => sum + expense.amount, 0)
-                .toLocaleString()} ر.س
+                .toLocaleString()} دينار
             </div>
           </CardContent>
         </Card>
@@ -465,7 +465,7 @@ export default function ExpensesPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{expense.amount.toLocaleString()} ر.س</TableCell>
+                  <TableCell>{expense.amount.toLocaleString()} دينار</TableCell>
                   <TableCell>{getPaymentMethodLabel(expense.payment_method)}</TableCell>
                   <TableCell>{getStatusBadge(expense.status)}</TableCell>
                   <TableCell>

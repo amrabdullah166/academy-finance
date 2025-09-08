@@ -185,7 +185,7 @@ export default function EnrollmentsPage() {
                     <SelectContent>
                       {courses.map(course => (
                         <SelectItem key={course.id} value={course.id}>
-                          {course.name} - {course.monthly_fee} ريال شهرياً
+                          {course.name} - {course.monthly_fee} دينار شهرياً
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -317,7 +317,7 @@ export default function EnrollmentsPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-green-600" />
-                        {enrollment.courses?.monthly_fee} ريال
+                        {enrollment.courses?.monthly_fee} دينار
                       </div>
                     </TableCell>
                     <TableCell>

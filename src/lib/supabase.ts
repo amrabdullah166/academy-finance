@@ -159,12 +159,26 @@ export const getStudents = async () => {
 }
 
 export const createStudent = async (student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) => {
+  // تنظيف البيانات قبل الإرسال
+  const cleanedStudent = {
+    ...student,
+    email: student.email || null,
+    phone: student.phone || null,
+    grade_level: student.grade_level || null,
+    address: student.address || null,
+    date_of_birth: student.date_of_birth || null,
+    discount_percentage: student.discount_percentage || 0
+  }
+
   const { data, error } = await supabase
     .from('students')
-    .insert([student])
+    .insert([cleanedStudent])
     .select()
   
-  if (error) throw error
+  if (error) {
+    console.error('خطأ في إنشاء الطالب:', error)
+    throw error
+  }
   return data[0]
 }
 
@@ -179,16 +193,223 @@ export const updateStudent = async (id: string, updates: Partial<Student>) => {
   return data[0]
 }
 
-export const deleteStudent = async (id: string) => {
-  const { error } = await supabase
-    .from('students')
-    .delete()
-    .eq('id', id)
-  
-  if (error) throw error
+export const deleteStudent = async (studentId: string) => {
+  try {
+    // الحصول على معلومات الطالب قبل الحذف للتأكد من وجوده
+    const { data: studentData, error: studentCheckError } = await supabase
+      .from('students')
+      .select('id, name')
+      .eq('id', studentId)
+      .single()
+
+    if (studentCheckError || !studentData) {
+      throw new Error('الطالب غير موجود')
+    }
+
+    console.log(`بدء حذف الطالب: ${studentData.name} (${studentId})`)
+
+    let deletedReminders = 0
+    let deletedPayments = 0
+    let deletedEnrollments = 0
+
+    // 1. محاولة حذف تفاصيل التذكيرات المرتبطة بالطالب
+    try {
+      const { data: reminderDetails, error: reminderDetailsError } = await supabase
+        .from('reminder_details')
+        .delete()
+        .eq('student_id', studentId)
+        .select('id')
+      
+      if (reminderDetailsError) {
+        console.warn('خطأ في حذف تفاصيل التذكيرات:', reminderDetailsError)
+      } else {
+        deletedReminders = reminderDetails?.length || 0
+        console.log(`تم حذف ${deletedReminders} تفصيل تذكير`)
+      }
+    } catch (reminderError) {
+      console.warn('جدول التذكيرات غير موجود أو خطأ في الوصول إليه:', reminderError)
+    }
+
+    // 2. حذف المدفوعات المرتبطة بالطالب
+    console.log(`محاولة حذف المدفوعات للطالب: ${studentId}`)
+    const { data: deletedPaymentsData, error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .eq('student_id', studentId)
+      .select('id')
+    
+    if (paymentsError) {
+      console.error('خطأ في حذف المدفوعات:', paymentsError)
+      throw new Error(`فشل في حذف المدفوعات: ${paymentsError.message}`)
+    } else {
+      deletedPayments = deletedPaymentsData?.length || 0
+      console.log(`تم حذف ${deletedPayments} دفعة فعلياً`)
+    }
+
+    // 3. حذف تسجيل الطالب في الكورسات
+    console.log(`محاولة حذف التسجيلات للطالب: ${studentId}`)
+    const { data: deletedEnrollmentsData, error: enrollmentError } = await supabase
+      .from('student_courses')
+      .delete()
+      .eq('student_id', studentId)
+      .select('id')
+    
+    if (enrollmentError) {
+      console.error('خطأ في حذف تسجيل الطالب:', enrollmentError)
+      throw new Error(`فشل في حذف تسجيل الطالب: ${enrollmentError.message}`)
+    } else {
+      deletedEnrollments = deletedEnrollmentsData?.length || 0
+      console.log(`تم حذف ${deletedEnrollments} تسجيل في كورس فعلياً`)
+    }
+
+    // 4. الآن حذف الطالب نفسه
+    console.log(`محاولة حذف الطالب من قاعدة البيانات: ${studentId}`)
+    const { data: deletedStudent, error: studentError } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', studentId)
+      .select()
+    
+    if (studentError) {
+      console.error('خطأ في حذف الطالب:', studentError)
+      throw new Error(`فشل في حذف الطالب: ${studentError.message}`)
+    }
+
+    console.log('البيانات المحذوفة:', deletedStudent)
+    if (!deletedStudent || deletedStudent.length === 0) {
+      console.warn('تحذير: لم يتم حذف أي بيانات من جدول الطلاب')
+    }
+
+    console.log('تم حذف الطالب بنجاح')
+    return {
+      success: true,
+      deletedPayments,
+      deletedEnrollments,
+      deletedReminders
+    }
+
+  } catch (error) {
+    console.error('خطأ عام في حذف الطالب:', error)
+    throw error
+  }
 }
 
-// Payments Functions
+// Activity Functions - إضافة جديدة
+export const getRecentActivities = async (limit = 10) => {
+  try {
+    // جلب آخر المدفوعات مع أسماء الطلاب
+    const { data: recentPayments, error: paymentsError } = await supabase
+      .from('payments')
+      .select(`
+        id,
+        amount,
+        payment_date,
+        payment_method,
+        status,
+        created_at,
+        students!inner(name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (paymentsError) {
+      console.error('خطأ في جلب المدفوعات:', paymentsError)
+    }
+
+    // جلب آخر التسجيلات مع أسماء الطلاب والكورسات
+    const { data: recentEnrollments, error: enrollmentsError } = await supabase
+      .from('student_courses')
+      .select(`
+        id,
+        enrollment_date,
+        status,
+        created_at,
+        students!inner(name, email),
+        courses!inner(name, monthly_fee)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (enrollmentsError) {
+      console.error('خطأ في جلب التسجيلات:', enrollmentsError)
+    }
+
+    // دمج النشاطات وترتيبها
+    const activities = []
+
+    // إضافة المدفوعات
+    if (recentPayments) {
+      activities.push(...recentPayments.map((payment: any) => ({
+        id: `payment-${payment.id}`,
+        type: 'payment' as const,
+        description: `دفعة من ${payment.students?.name || 'غير محدد'} - ${payment.payment_method === 'monthly_fee' ? 'اشتراك شهري' : getPaymentMethodName(payment.payment_method)}`,
+        amount: payment.amount,
+        date: payment.payment_date,
+        status: payment.status,
+        created_at: payment.created_at
+      })))
+    }
+
+    // إضافة التسجيلات
+    if (recentEnrollments) {
+      activities.push(...recentEnrollments.map((enrollment: any) => ({
+        id: `enrollment-${enrollment.id}`,
+        type: 'enrollment' as const,
+        description: `تسجيل ${enrollment.students?.name || 'غير محدد'} في ${enrollment.courses?.name || 'غير محدد'}`,
+        amount: enrollment.courses?.monthly_fee || 0,
+        date: enrollment.enrollment_date,
+        status: enrollment.status,
+        created_at: enrollment.created_at
+      })))
+    }
+
+    // ترتيب النشاطات حسب التاريخ وإرجاع المحدود
+    return activities
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit)
+
+  } catch (error) {
+    console.error('خطأ في جلب النشاطات الأخيرة:', error)
+    return []
+  }
+}
+
+const getPaymentMethodName = (method: string) => {
+  const methods = {
+    monthly_fee: 'اشتراك شهري',
+    registration: 'رسوم تسجيل',
+    materials: 'رسوم مواد',
+    penalty: 'غرامة',
+    refund: 'استرداد',
+    other: 'أخرى'
+  }
+  return methods[method as keyof typeof methods] || method
+}
+
+// إضافة نشاط جديد (اختياري - يمكن استخدامه لاحقاً)
+export const createActivity = async (activity: {
+  type: string;
+  description: string;
+  amount?: number;
+  related_id?: string;
+}) => {
+  try {
+    const { data, error } = await supabase
+      .from('activities')
+      .insert([{
+        ...activity,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+
+    if (error) throw error
+    return data[0]
+  } catch (error) {
+    console.error('خطأ في إنشاء النشاط:', error)
+    // لا نرمي خطأ هنا لأن الأنشطة اختيارية
+    return null
+  }
+}
 export const getPayments = async () => {
   const { data, error } = await supabase
     .from('payments')
@@ -282,6 +503,98 @@ export const createCourse = async (course: Omit<Course, 'id' | 'created_at' | 'u
   // ويمكن إضافة الطلاب لاحقاً من خلال واجهة منفصلة
   
   return data[0]
+}
+
+export const deleteCourse = async (courseId: string) => {
+  try {
+    // الحصول على معلومات الكورس قبل الحذف للتأكد من وجوده
+    const { data: courseData, error: courseCheckError } = await supabase
+      .from('courses')
+      .select('id, name')
+      .eq('id', courseId)
+      .single()
+
+    if (courseCheckError || !courseData) {
+      throw new Error('الكورس غير موجود')
+    }
+
+    console.log(`بدء حذف الكورس: ${courseData.name} (${courseId})`)
+
+    let deletedReminders = 0
+    let deletedPayments = 0
+    let deletedEnrollments = 0
+
+    // 1. محاولة حذف تفاصيل التذكيرات (قد لا يكون الجدول موجوداً)
+    try {
+      const { data: reminderDetails, error: reminderDetailsError } = await supabase
+        .from('reminder_details')
+        .delete()
+        .eq('course_id', courseId)
+        .select('id')
+      
+      if (reminderDetailsError) {
+        console.warn('خطأ في حذف تفاصيل التذكيرات:', reminderDetailsError)
+      } else {
+        deletedReminders = reminderDetails?.length || 0
+        console.log(`تم حذف ${deletedReminders} تفصيل تذكير`)
+      }
+    } catch (reminderError) {
+      console.warn('جدول التذكيرات غير موجود أو خطأ في الوصول إليه:', reminderError)
+    }
+
+    // 2. حذف المدفوعات المرتبطة بالكورس أولاً
+    const { data: deletedPaymentsData, error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .eq('course_id', courseId)
+      .select('id')
+    
+    if (paymentsError) {
+      console.error('خطأ في حذف المدفوعات:', paymentsError)
+      throw new Error(`فشل في حذف المدفوعات: ${paymentsError.message}`)
+    } else {
+      deletedPayments = deletedPaymentsData?.length || 0
+      console.log(`تم حذف ${deletedPayments} دفعة`)
+    }
+
+    // 3. حذف تسجيل الطلاب في الكورس
+    const { data: deletedEnrollmentsData, error: enrollmentError } = await supabase
+      .from('student_courses')
+      .delete()
+      .eq('course_id', courseId)
+      .select('id')
+    
+    if (enrollmentError) {
+      console.error('خطأ في حذف تسجيل الطلاب:', enrollmentError)
+      throw new Error(`فشل في حذف تسجيل الطلاب: ${enrollmentError.message}`)
+    } else {
+      deletedEnrollments = deletedEnrollmentsData?.length || 0
+      console.log(`تم حذف ${deletedEnrollments} تسجيل طالب`)
+    }
+
+    // 4. الآن حذف الكورس نفسه
+    const { error: courseError } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', courseId)
+    
+    if (courseError) {
+      console.error('خطأ في حذف الكورس:', courseError)
+      throw new Error(`فشل في حذف الكورس: ${courseError.message}`)
+    }
+
+    console.log('تم حذف الكورس بنجاح')
+    return {
+      success: true,
+      deletedPayments,
+      deletedEnrollments,
+      deletedReminders
+    }
+
+  } catch (error) {
+    console.error('خطأ عام في حذف الكورس:', error)
+    throw error
+  }
 }
 
 // Employees Functions
@@ -841,4 +1154,211 @@ export const getRecentPayments = async (limit: number = 5): Promise<Payment[]> =
     console.error('Error in getRecentPayments:', error)
     return []
   }
+}
+
+// ===== Payment Status and Reminders Types =====
+export interface PaymentStatus {
+  student_id: string
+  course_id: string
+  student_name: string
+  student_phone: string
+  course_name: string
+  monthly_fee: number
+  enrollment_date: string
+  months_enrolled: number
+  total_due_amount: number
+  total_paid: number
+  remaining_amount: number
+  months_overdue: number
+  payment_status: 'paid_up' | 'current_month_due' | 'overdue'
+  last_payment_date: string | null
+}
+
+export interface SystemSetting {
+  id: string
+  setting_key: string
+  setting_value: string
+  setting_type: 'string' | 'number' | 'boolean' | 'date'
+  description: string
+  created_at: string
+  updated_at: string
+}
+
+export interface MonthlyReminder {
+  id: string
+  reminder_date: string
+  reminder_type: string
+  title: string
+  description: string
+  total_students: number
+  total_amount: number
+  status: 'pending' | 'sent' | 'completed'
+  created_at: string
+  processed_at: string | null
+}
+
+export interface ReminderDetail {
+  id: string
+  reminder_id: string
+  student_id: string
+  course_id: string
+  due_amount: number
+  months_overdue: number
+  penalty_amount: number
+  last_payment_date: string | null
+  status: 'pending' | 'paid' | 'overdue'
+  created_at: string
+  student?: Student
+  course?: Course
+}
+
+// ===== Payment Status Functions =====
+export const getStudentPaymentStatus = async (): Promise<PaymentStatus[]> => {
+  const { data, error } = await supabase
+    .from('student_payment_status')
+    .select('*')
+    .order('remaining_amount', { ascending: false })
+  
+  if (error) throw error
+  return data || []
+}
+
+export const getPaymentStatistics = async () => {
+  const { data, error } = await supabase
+    .rpc('get_payment_statistics_simple')
+  
+  if (error) throw error
+  return data?.[0] || {
+    total_students_with_dues: 0,
+    total_outstanding_amount: 0,
+    students_current_month: 0,
+    students_overdue: 0,
+    average_months_overdue: 0
+  }
+}
+
+// ===== System Settings Functions =====
+export const getSystemSettings = async (): Promise<SystemSetting[]> => {
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('*')
+    .order('setting_key')
+  
+  if (error) throw error
+  
+  const settings = data || []
+  
+  // إضافة الإعداد الافتراضي لنموذج النسخ إذا لم يكن موجوداً
+  const copyTemplateExists = settings.find(s => s.setting_key === 'copy_student_template')
+  if (!copyTemplateExists) {
+    const defaultTemplate = 'الطالب: {student_name}\nالمتطلبات المالية: {amount} دينار\nرقم ولي الأمر: {guardian_phone}\nالكورسات: {courses}'
+    
+    const { data: newSetting, error: insertError } = await supabase
+      .from('system_settings')
+      .insert({
+        setting_key: 'copy_student_template',
+        setting_value: defaultTemplate,
+        description: 'نموذج نسخ بيانات الطالب'
+      })
+      .select()
+      .single()
+    
+    if (!insertError && newSetting) {
+      settings.push(newSetting)
+    }
+  }
+  
+  return settings
+}
+
+export const updateSystemSetting = async (key: string, value: string) => {
+  // محاولة التحديث أولاً
+  const { data, error } = await supabase
+    .from('system_settings')
+    .update({ 
+      setting_value: value,
+      updated_at: new Date().toISOString()
+    })
+    .eq('setting_key', key)
+    .select()
+    .single()
+  
+  // إذا لم يكن الإعداد موجوداً، قم بإنشاؤه
+  if (error && error.code === 'PGRST116') {
+    const { data: newData, error: insertError } = await supabase
+      .from('system_settings')
+      .insert({
+        setting_key: key,
+        setting_value: value,
+        description: `إعداد ${key}`
+      })
+      .select()
+      .single()
+    
+    if (insertError) throw insertError
+    return newData
+  }
+  
+  if (error) throw error
+  return data
+}
+
+export const getSystemSetting = async (key: string): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('setting_value')
+    .eq('setting_key', key)
+    .single()
+  
+  if (error) return null
+  return data?.setting_value || null
+}
+
+// ===== Monthly Reminders Functions =====
+export const getMonthlyReminders = async (): Promise<MonthlyReminder[]> => {
+  const { data, error } = await supabase
+    .from('monthly_reminders')
+    .select('*')
+    .order('reminder_date', { ascending: false })
+  
+  if (error) throw error
+  return data || []
+}
+
+export const generateMonthlyReminder = async () => {
+  const { data, error } = await supabase
+    .rpc('generate_monthly_reminder')
+  
+  if (error) throw error
+  return data?.[0]
+}
+
+export const getReminderDetails = async (reminderId: string): Promise<ReminderDetail[]> => {
+  const { data, error } = await supabase
+    .from('reminder_details')
+    .select(`
+      *,
+      student:students(name, phone, email),
+      course:courses(name, monthly_fee)
+    `)
+    .eq('reminder_id', reminderId)
+    .order('due_amount', { ascending: false })
+  
+  if (error) throw error
+  return data || []
+}
+
+export const markReminderAsProcessed = async (reminderId: string) => {
+  const { data, error } = await supabase
+    .from('monthly_reminders')
+    .update({ 
+      status: 'sent',
+      processed_at: new Date().toISOString()
+    })
+    .eq('id', reminderId)
+    .select()
+    .single()
+  
+  if (error) throw error
+  return data
 }

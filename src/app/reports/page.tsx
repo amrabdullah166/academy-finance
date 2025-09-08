@@ -387,7 +387,7 @@ export default function ReportsPageNew() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {reportData.totalRevenue.toLocaleString()} ر.س
+                  {reportData.totalRevenue.toLocaleString()} دينار
                 </div>
                 <p className="text-xs text-slate-600">خلال الفترة المحددة</p>
               </CardContent>
@@ -402,7 +402,7 @@ export default function ReportsPageNew() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {reportData.totalExpenses.toLocaleString()} ر.س
+                  {reportData.totalExpenses.toLocaleString()} دينار
                 </div>
                 <p className="text-xs text-slate-600">خلال الفترة المحددة</p>
               </CardContent>
@@ -417,7 +417,7 @@ export default function ReportsPageNew() {
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold ${reportData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {reportData.netProfit.toLocaleString()} ر.س
+                  {reportData.netProfit.toLocaleString()} دينار
                 </div>
                 <p className="text-xs text-slate-600">
                   {reportData.netProfit >= 0 ? 'ربح' : 'خسارة'} صافية
@@ -465,10 +465,10 @@ export default function ReportsPageNew() {
                     {reportData.monthlyData.map((data, index) => (
                       <tr key={index} className="border-b">
                         <td className="py-2 font-medium">{getMonthName(data.month)}</td>
-                        <td className="py-2 text-green-600">{data.revenue.toLocaleString()} ر.س</td>
-                        <td className="py-2 text-red-600">{data.expenses.toLocaleString()} ر.س</td>
+                        <td className="py-2 text-green-600">{data.revenue.toLocaleString()} دينار</td>
+                        <td className="py-2 text-red-600">{data.expenses.toLocaleString()} دينار</td>
                         <td className={`py-2 ${data.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {data.profit.toLocaleString()} ر.س
+                          {data.profit.toLocaleString()} دينار
                         </td>
                         <td className="py-2">
                           <Badge variant={data.profit >= 0 ? 'default' : 'destructive'} className="text-xs">
@@ -499,7 +499,7 @@ export default function ReportsPageNew() {
                         <p className="text-sm text-slate-600">{method.count} دفعة</p>
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-green-600">{method.amount.toLocaleString()} ر.س</p>
+                        <p className="font-bold text-green-600">{method.amount.toLocaleString()} دينار</p>
                         <p className="text-xs text-slate-500">
                           {reportData.totalRevenue > 0 ? ((method.amount / reportData.totalRevenue) * 100).toFixed(1) : 0}%
                         </p>
@@ -524,7 +524,7 @@ export default function ReportsPageNew() {
                         <p className="text-sm text-slate-600">{category.count} مصروف</p>
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-red-600">{category.amount.toLocaleString()} ر.س</p>
+                        <p className="font-bold text-red-600">{category.amount.toLocaleString()} دينار</p>
                         <p className="text-xs text-slate-500">
                           {reportData.totalExpenses > 0 ? ((category.amount / reportData.totalExpenses) * 100).toFixed(1) : 0}%
                         </p>

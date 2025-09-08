@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -22,7 +22,8 @@ import {
   Calendar,
   DollarSign,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Copy
 } from 'lucide-react'
 import Link from 'next/link'
 import { 
@@ -31,15 +32,24 @@ import {
   Student, 
   getCourses, 
   Course, 
-  enrollStudentInCourse 
+  enrollStudentInCourse,
+  getStudentPaymentStatus,
+  PaymentStatus,
+  deleteStudent,
+  getSystemSettings,
+  SystemSetting
 } from '@/lib/supabase'
 
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null)
   const [students, setStudents] = useState<Student[]>([])
   const [courses, setCourses] = useState<Course[]>([])
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus[]>([])
+  const [settings, setSettings] = useState<SystemSetting[]>([])
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
@@ -61,12 +71,16 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     try {
       setLoading(true)
-      const [studentsData, coursesData] = await Promise.all([
+      const [studentsData, coursesData, paymentStatusData, settingsData] = await Promise.all([
         getStudents(),
-        getCourses()
+        getCourses(),
+        getStudentPaymentStatus(),
+        getSystemSettings()
       ])
       setStudents(studentsData)
       setCourses(coursesData.filter(course => course.status === 'active'))
+      setPaymentStatus(paymentStatusData)
+      setSettings(settingsData)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -77,15 +91,41 @@ export default function StudentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // إنشاء الطالب
-      const newStudent = await createStudent({
-        ...formData,
-        status: 'active',
+      // التحقق من الحقول المطلوبة
+      if (!formData.name.trim()) {
+        alert('يرجى إدخال اسم الطالب')
+        return
+      }
+      if (!formData.guardian_name.trim()) {
+        alert('يرجى إدخال اسم ولي الأمر')
+        return
+      }
+      if (!formData.guardian_phone.trim()) {
+        alert('يرجى إدخال رقم هاتف ولي الأمر')
+        return
+      }
+
+      // إنشاء الطالب (بدون selected_course)
+      const studentData = {
+        name: formData.name.trim(),
+        email: formData.email.trim() || null,
+        phone: formData.phone.trim() || null,
+        guardian_name: formData.guardian_name.trim(),
+        guardian_phone: formData.guardian_phone.trim(),
+        grade_level: formData.grade_level.trim() || null,
+        discount_percentage: Number(formData.discount_percentage) || 0,
+        address: formData.address.trim() || null,
+        date_of_birth: formData.date_of_birth.trim() || null, // إرسال null بدلاً من سلسلة فارغة
+        status: 'active' as const,
         enrollment_date: new Date().toISOString().split('T')[0]
-      })
+      }
+      
+      console.log('بيانات الطالب قبل الإرسال:', studentData)
+      
+      const newStudent = await createStudent(studentData)
       
       // إذا تم اختيار دورة، سجل الطالب فيها
-      if (formData.selected_course && newStudent?.id) {
+      if (formData.selected_course && formData.selected_course !== 'none' && newStudent?.id) {
         await enrollStudentInCourse(newStudent.id, formData.selected_course)
       }
       
@@ -105,10 +145,45 @@ export default function StudentsPage() {
       fetchStudents()
       
       // رسالة نجاح
-      alert('تم إضافة الطالب بنجاح' + (formData.selected_course ? ' وتسجيله في الدورة' : ''))
+      const successMessage = formData.selected_course && formData.selected_course !== 'none' 
+        ? 'تم إضافة الطالب بنجاح وتسجيله في الدورة' 
+        : 'تم إضافة الطالب بنجاح'
+      alert(successMessage)
     } catch (error) {
       console.error('Error creating student:', error)
       alert('حدث خطأ أثناء إضافة الطالب')
+    }
+  }
+
+  const handleDelete = (student: Student) => {
+    setStudentToDelete(student)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!studentToDelete) return
+    
+    try {
+      console.log(`محاولة حذف الطالب: ${studentToDelete.name} (${studentToDelete.id})`)
+      const result = await deleteStudent(studentToDelete.id)
+      console.log('نتيجة الحذف:', result)
+      
+      // تحديث الحالة المحلية فوراً
+      setStudents(prevStudents => prevStudents.filter(s => s.id !== studentToDelete.id))
+      
+      setIsDeleteDialogOpen(false)
+      setStudentToDelete(null)
+      
+      // إعادة تحميل البيانات للتأكد
+      await fetchStudents()
+      
+      // رسالة تفصيلية عما تم حذفه
+      const message = `تم حذف الطالب "${studentToDelete.name}" بنجاح!\n\nتفاصيل ما تم حذفه:\n• ${result.deletedPayments} مدفوعة\n• ${result.deletedEnrollments} تسجيل في كورس\n• ${result.deletedReminders} تذكير`
+      alert(message)
+    } catch (error) {
+      console.error('خطأ في حذف الطالب:', error)
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير متوقع أثناء حذف الطالب'
+      alert(`فشل في حذف الطالب: ${errorMessage}`)
     }
   }
 
@@ -121,6 +196,63 @@ export default function StudentsPage() {
     
     return matchesSearch && matchesStatus
   })
+
+  const getSetting = (key: string) => {
+    return settings.find(s => s.setting_key === key)?.setting_value || ''
+  }
+
+  const copyStudentInfo = async (student: Student) => {
+    try {
+      const paymentInfo = getStudentPaymentInfo(student.id)
+      const template = getSetting('copy_student_template') || 'الطالب: {student_name}\nالمتطلبات المالية: {amount} دينار\nرقم ولي الأمر: {guardian_phone}'
+      
+      // الحصول على كورسات الطالب
+      const studentCourses = courses.filter(course => 
+        paymentStatus.some(ps => ps.student_id === student.id && ps.course_name === course.name)
+      )
+      
+      const text = template
+        .replace('{student_name}', student.name)
+        .replace('{amount}', paymentInfo?.totalRemaining?.toString() || '0')
+        .replace('{guardian_phone}', student.guardian_phone || '')
+        .replace('{courses}', studentCourses.map(c => c.name).join(', ') || 'لا توجد كورسات')
+      
+      await navigator.clipboard.writeText(text)
+      alert('تم نسخ بيانات الطالب إلى الحافظة!')
+    } catch (error) {
+      console.error('Error copying text:', error)
+      alert('حدث خطأ أثناء نسخ البيانات')
+    }
+  }
+
+  const getStudentPaymentInfo = (studentId: string) => {
+    const studentPayments = paymentStatus.filter(ps => ps.student_id === studentId)
+    if (studentPayments.length === 0) return null
+    
+    const totalRemaining = studentPayments.reduce((sum, ps) => sum + ps.remaining_amount, 0)
+    const hasOverdue = studentPayments.some(ps => ps.payment_status === 'overdue')
+    const maxMonthsOverdue = Math.max(...studentPayments.map(ps => ps.months_overdue))
+    
+    return {
+      totalRemaining,
+      hasOverdue,
+      maxMonthsOverdue,
+      coursesCount: studentPayments.length
+    }
+  }
+
+  const getPaymentStatusBadge = (studentId: string) => {
+    const paymentInfo = getStudentPaymentInfo(studentId)
+    if (!paymentInfo) return <Badge variant="outline">غير مسجل</Badge>
+    
+    if (paymentInfo.totalRemaining <= 0) {
+      return <Badge variant="default" className="bg-green-100 text-green-800">مدفوع</Badge>
+    } else if (paymentInfo.hasOverdue) {
+      return <Badge variant="destructive">متأخر ({paymentInfo.maxMonthsOverdue} شهر)</Badge>
+    } else {
+      return <Badge variant="outline" className="bg-yellow-50 text-yellow-800">مستحق</Badge>
+    }
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -285,6 +417,23 @@ export default function StudentsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="course">الدورة (اختياري)</Label>
+                  <Select value={formData.selected_course} onValueChange={(value) => setFormData(prev => ({ ...prev, selected_course: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر دورة لتسجيل الطالب فيها" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">بدون دورة</SelectItem>
+                      {courses.map(course => (
+                        <SelectItem key={course.id} value={course.id}>
+                          {course.name} - {course.monthly_fee} دينار شهرياً
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="course">الدورة (اختياري)</Label>
                   <Select 
                     value={formData.selected_course} 
                     onValueChange={(value) => setFormData(prev => ({ ...prev, selected_course: value }))}
@@ -296,7 +445,7 @@ export default function StudentsPage() {
                       <SelectItem value="none">بدون دورة</SelectItem>
                       {courses.map(course => (
                         <SelectItem key={course.id} value={course.id}>
-                          {course.name} - {course.monthly_fee} ريال
+                          {course.name} - {course.monthly_fee} دينار
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -434,6 +583,8 @@ export default function StudentsPage() {
                   <TableHead>ولي الأمر</TableHead>
                   <TableHead>المستوى</TableHead>
                   <TableHead>الحالة</TableHead>
+                  <TableHead>حالة الدفع</TableHead>
+                  <TableHead>المبلغ المتبقي</TableHead>
                   <TableHead>الخصم</TableHead>
                   <TableHead>تاريخ التسجيل</TableHead>
                   <TableHead>الإجراءات</TableHead>
@@ -479,6 +630,23 @@ export default function StudentsPage() {
                       {getStatusBadge(student.status)}
                     </TableCell>
                     <TableCell>
+                      {getPaymentStatusBadge(student.id)}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const paymentInfo = getStudentPaymentInfo(student.id)
+                        if (!paymentInfo) return <span className="text-slate-500">-</span>
+                        return (
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3 text-red-500" />
+                            <span className={`font-medium ${paymentInfo.totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {paymentInfo.totalRemaining.toLocaleString()} دينار
+                            </span>
+                          </div>
+                        )
+                      })()}
+                    </TableCell>
+                    <TableCell>
                       <span className="text-orange-600 font-medium">
                         {student.discount_percentage}%
                       </span>
@@ -497,7 +665,21 @@ export default function StudentsPage() {
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() => copyStudentInfo(student)}
+                          title="نسخ بيانات الطالب"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDelete(student)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -514,6 +696,53 @@ export default function StudentsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تأكيد حذف الطالب</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من أنك تريد حذف الطالب "{studentToDelete?.name}"؟
+              <br />
+              <span className="text-red-600 font-medium">
+                سيتم حذف جميع البيانات المرتبطة بهذا الطالب نهائياً.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
+            <div className="flex items-start gap-2">
+              <div className="text-red-600 mt-0.5">⚠️</div>
+              <div className="text-sm text-red-800">
+                <p className="font-medium mb-2">سيتم حذف البيانات التالية:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>بيانات الطالب الشخصية</li>
+                  <li>جميع المدفوعات المرتبطة بالطالب</li>
+                  <li>تسجيل الطالب في جميع الكورسات</li>
+                  <li>جميع التذكيرات المرتبطة بالطالب</li>
+                  <li><strong>هذا الإجراء لا يمكن التراجع عنه!</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              نعم، احذف الطالب
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

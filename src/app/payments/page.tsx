@@ -351,7 +351,7 @@ export default function PaymentsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-800">
-              {getTodaysTotal().toLocaleString()} ر.س
+              {getTodaysTotal().toLocaleString()} دينار
             </div>
             <p className="text-xs text-green-600">دفعات اليوم</p>
           </CardContent>
@@ -396,7 +396,7 @@ export default function PaymentsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-800">
-              {getMonthlyTotal().toLocaleString()} ر.س
+              {getMonthlyTotal().toLocaleString()} دينار
             </div>
             <p className="text-xs text-green-600">هذا الشهر</p>
           </CardContent>
@@ -494,7 +494,7 @@ export default function PaymentsPage() {
                     </TableCell>
                     <TableCell>
                       <span className="text-green-600 font-bold text-lg">
-                        {payment.amount.toLocaleString()} ر.س
+                        {payment.amount.toLocaleString()} دينار
                       </span>
                     </TableCell>
                     <TableCell>

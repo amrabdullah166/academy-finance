@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { getCourses, createCourse, getStudents, getPayments, getStudentCourses } from '@/lib/supabase'
+import { getCourses, createCourse, getStudents, getPayments, getStudentCourses, deleteCourse } from '@/lib/supabase'
 
 interface Course {
   id: string
@@ -50,7 +50,9 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<CourseWithStats | null>(null)
+  const [courseToDelete, setCourseToDelete] = useState<CourseWithStats | null>(null)
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -194,6 +196,30 @@ export default function CoursesPage() {
   const handleViewStudents = (course: CourseWithStats) => {
     setSelectedCourse(course)
     setIsStudentsDialogOpen(true)
+  }
+
+  const handleDelete = (course: CourseWithStats) => {
+    setCourseToDelete(course)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!courseToDelete) return
+    
+    try {
+      const result = await deleteCourse(courseToDelete.id)
+      setIsDeleteDialogOpen(false)
+      setCourseToDelete(null)
+      loadData()
+      
+      // رسالة تفصيلية عما تم حذفه
+      const message = `تم حذف الكورس "${courseToDelete.name}" بنجاح!\n\nتفاصيل ما تم حذفه:\n• ${result.deletedPayments} مدفوعة\n• ${result.deletedEnrollments} تسجيل طالب\n• ${result.deletedReminders} تذكير`
+      alert(message)
+    } catch (error) {
+      console.error('خطأ في حذف الكورس:', error)
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير متوقع أثناء حذف الكورس'
+      alert(`فشل في حذف الكورس: ${errorMessage}`)
+    }
   }
 
   const resetForm = () => {
@@ -412,7 +438,7 @@ export default function CoursesPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStats.totalRevenue.toLocaleString()} ر.س</div>
+            <div className="text-2xl font-bold">{totalStats.totalRevenue.toLocaleString()} دينار</div>
           </CardContent>
         </Card>
       </div>
@@ -481,7 +507,7 @@ export default function CoursesPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{course.monthly_fee.toLocaleString()} ر.س</TableCell>
+                  <TableCell>{course.monthly_fee.toLocaleString()} دينار</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
@@ -496,7 +522,7 @@ export default function CoursesPage() {
                   <TableCell>
                     <Badge variant="outline">{course.active_subscriptions}</Badge>
                   </TableCell>
-                  <TableCell>{course.total_revenue.toLocaleString()} ر.س</TableCell>
+                  <TableCell>{course.total_revenue.toLocaleString()} دينار</TableCell>
                   <TableCell>{getStatusBadge(course.status)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -513,6 +539,14 @@ export default function CoursesPage() {
                         onClick={() => handleEdit(course)}
                       >
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(course)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -616,6 +650,53 @@ export default function CoursesPage() {
               </div>
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تأكيد حذف الكورس</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من أنك تريد حذف كورس "{courseToDelete?.name}"؟
+              <br />
+              <span className="text-red-600 font-medium">
+                سيتم حذف جميع البيانات المرتبطة بهذا الكورس نهائياً.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
+            <div className="flex items-start gap-2">
+              <div className="text-red-600 mt-0.5">⚠️</div>
+              <div className="text-sm text-red-800">
+                <p className="font-medium mb-2">سيتم حذف البيانات التالية:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>الكورس نفسه</li>
+                  <li>جميع الطلاب المسجلين في الكورس</li>
+                  <li>جميع المدفوعات المرتبطة بالكورس</li>
+                  <li>جميع التذكيرات المرتبطة بالكورس</li>
+                  <li><strong>هذا الإجراء لا يمكن التراجع عنه!</strong></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              نعم، احذف الكورس
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -285,7 +285,7 @@ export default function SubscriptionsPageNew() {
                       <SelectContent>
                         {courses.map((course) => (
                           <SelectItem key={course.id} value={course.id}>
-                            {course.name} - {course.monthly_fee} ر.س
+                            {course.name} - {course.monthly_fee} دينار
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -371,7 +371,7 @@ export default function SubscriptionsPageNew() {
             <div className="text-2xl font-bold text-slate-800">
               {subscriptions.filter(s => s.payment_status === 'pending').length}
             </div>
-            <p className="text-xs text-orange-600">{getPendingTotal().toLocaleString()} ر.س</p>
+            <p className="text-xs text-orange-600">{getPendingTotal().toLocaleString()} دينار</p>
           </CardContent>
         </Card>
 
@@ -386,7 +386,7 @@ export default function SubscriptionsPageNew() {
             <div className="text-2xl font-bold text-slate-800">
               {overdueSubscriptions.length}
             </div>
-            <p className="text-xs text-red-600">{getOverdueTotal().toLocaleString()} ر.س</p>
+            <p className="text-xs text-red-600">{getOverdueTotal().toLocaleString()} دينار</p>
           </CardContent>
         </Card>
 
@@ -414,7 +414,7 @@ export default function SubscriptionsPageNew() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-800">
-              {getMonthlyTotal().toLocaleString()} ر.س
+              {getMonthlyTotal().toLocaleString()} دينار
             </div>
             <p className="text-xs text-purple-600">من الاشتراكات</p>
           </CardContent>
@@ -432,7 +432,7 @@ export default function SubscriptionsPageNew() {
           </CardHeader>
           <CardContent>
             <p className="text-red-700 mb-4">
-              يوجد {overdueSubscriptions.length} اشتراك متأخر بإجمالي {getOverdueTotal().toLocaleString()} ر.س
+              يوجد {overdueSubscriptions.length} اشتراك متأخر بإجمالي {getOverdueTotal().toLocaleString()} دينار
             </p>
             <div className="space-y-2">
               {overdueSubscriptions.slice(0, 3).map((sub) => (
@@ -534,17 +534,17 @@ export default function SubscriptionsPageNew() {
                     </TableCell>
                     <TableCell>
                       <span className="text-slate-600">
-                        {subscription.amount.toLocaleString()} ر.س
+                        {subscription.amount.toLocaleString()} دينار
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-orange-600">
-                        {subscription.discount_amount.toLocaleString()} ر.س
+                        {subscription.discount_amount.toLocaleString()} دينار
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-green-600 font-bold">
-                        {subscription.final_amount.toLocaleString()} ر.س
+                        {subscription.final_amount.toLocaleString()} دينار
                       </span>
                     </TableCell>
                     <TableCell>

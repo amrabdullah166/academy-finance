@@ -83,7 +83,7 @@ export default function Dashboard() {
         getEnhancedDashboardStats(),
         getRecentPayments(5),
         getStudentCourses(),
-        getNotifications(5)
+        getNotifications() // إزالة الـ parameter الخطأ
       ])
 
       setStats(dashboardStats)
@@ -277,7 +277,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {stats.monthlyRevenue.toLocaleString()} ر.س
+                {stats.monthlyRevenue.toLocaleString()} دينار
               </div>
               <p className="text-xs text-muted-foreground">
                 هذا الشهر
@@ -303,7 +303,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${stats.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {stats.netProfit.toLocaleString()} ر.س
+              {stats.netProfit.toLocaleString()} دينار
             </div>
             <p className="text-xs text-muted-foreground">
               الإيرادات - المصروفات
@@ -351,7 +351,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2">
                       {activity.amount && (
                         <span className="text-sm font-medium">
-                          {activity.amount.toLocaleString()} ر.س
+                          {activity.amount.toLocaleString()} دينار
                         </span>
                       )}
                       {getStatusBadge(activity.status, activity.type)}
