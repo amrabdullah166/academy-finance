@@ -3,10 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Debug logging
-console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase Key exists:', !!supabaseAnonKey)
-
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase environment variables are not set. Using fallback configuration.')
 }
@@ -18,9 +14,7 @@ export const supabase = createClient(
 
 // Helper function to check if Supabase is properly configured
 const isSupabaseConfigured = () => {
-  const isConfigured = Boolean(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://fallback.supabase.co')
-  console.log('Supabase configured check:', isConfigured)
-  return isConfigured
+  return Boolean(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'https://fallback.supabase.co')
 }
 
 // Safe wrapper for Supabase operations

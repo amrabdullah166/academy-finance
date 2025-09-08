@@ -17,18 +17,24 @@ This is a [Next.js](https://nextjs.org) project for managing academy finances, b
 
 ### For Vercel Deployment
 
-You need to set the following environment variables in your Vercel project settings:
+**⚠️ هذا هو السبب الأساسي لعدم عمل التطبيق على Vercel!**
 
-1. Go to your Vercel project dashboard
-2. Navigate to Settings > Environment Variables
-3. Add the following variables:
+يجب إضافة متغيرات البيئة في لوحة تحكم Vercel:
+
+1. انتقل إلى مشروعك على Vercel Dashboard
+2. اذهب إلى **Settings** > **Environment Variables**
+3. أضف المتغيرات التالية (لجميع البيئات: Production, Preview, Development):
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+NEXT_PUBLIC_SUPABASE_URL=https://wyaweaunabutzpsnogti.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5YXdlYXVuYWJ1dHpwc25vZ3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMTY3NjEsImV4cCI6MjA3Mjg5Mjc2MX0.jqXqTS2uCiZCNzO9u71im6DcQu621RiPsIaZYKIYlC0
 NEXT_PUBLIC_APP_NAME=نظام إدارة الأكاديمية المالي
 NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
+
+4. **بعد الإضافة:** اضغط "Redeploy" أو ارفع تغيير جديد لإعادة النشر
+
+📋 **راجع ملف `VERCEL_ENV_SETUP.md` للتعليمات المفصلة**
 
 **Note**: Get your Supabase URL and anon key from your [Supabase project dashboard](https://supabase.com/dashboard).
 
