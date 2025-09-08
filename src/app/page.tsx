@@ -47,6 +47,38 @@ interface RecentActivity {
   status: string
 }
 
+interface Notification {
+  id: string
+  type: string
+  title: string
+  message: string
+  created_at: string
+  is_read: boolean
+}
+
+interface Payment {
+  id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  status: string
+  students?: {
+    name: string
+  }
+}
+
+interface Enrollment {
+  id: string
+  enrollment_date: string
+  status: string
+  students?: {
+    name: string
+  }
+  courses?: {
+    name: string
+  }
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalStudents: 0,
@@ -60,15 +92,11 @@ export default function Dashboard() {
     overdueSubscriptions: 0
   })
   
-  const [recentPayments, setRecentPayments] = useState<any[]>([])
-  const [recentEnrollments, setRecentEnrollments] = useState<any[]>([])
-  const [notifications, setNotifications] = useState<any[]>([])
+  const [recentPayments, setRecentPayments] = useState<Payment[]>([])
+  const [recentEnrollments, setRecentEnrollments] = useState<Enrollment[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
 
   const fetchDashboardData = async () => {
     try {
@@ -83,7 +111,7 @@ export default function Dashboard() {
         getEnhancedDashboardStats(),
         getRecentPayments(5),
         getStudentCourses(),
-        getNotifications(5)
+        getNotifications(undefined, false)
       ])
 
       setStats(dashboardStats)
@@ -93,7 +121,7 @@ export default function Dashboard() {
 
       // Combine recent activities
       const activities: RecentActivity[] = [
-        ...payments?.map((p: any) => ({
+        ...payments?.map((p: Payment) => ({
           id: p.id,
           type: 'payment' as const,
           description: `دفعة من ${p.students?.name || 'غير محدد'} - ${p.payment_method === 'monthly_fee' ? 'اشتراك شهري' : 'رسوم أخرى'}`,
@@ -101,7 +129,7 @@ export default function Dashboard() {
           date: p.payment_date,
           status: p.status
         })) || [],
-        ...enrollments?.slice(0, 3).map((e: any) => ({
+        ...enrollments?.slice(0, 3).map((e: Enrollment) => ({
           id: e.id,
           type: 'enrollment' as const,
           description: `تسجيل ${e.students?.name || 'غير محدد'} في ${e.courses?.name || 'غير محدد'}`,
@@ -118,6 +146,10 @@ export default function Dashboard() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
 
   const getActivityIcon = (type: string) => {
     switch (type) {
