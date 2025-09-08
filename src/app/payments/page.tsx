@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,70 +21,86 @@ import {
   Banknote,
   Building2,
   Smartphone,
-  PrinterIcon
+  PrinterIcon,
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
+import { getPayments, createPayment, getStudents, getCourses, Payment, Student, Course } from '@/lib/supabase'
 
 export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [students, setStudents] = useState<Student[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  const [formData, setFormData] = useState({
+    student_id: '',
+    course_id: '',
+    amount: '',
+    payment_type: 'cash' as 'cash' | 'bank_transfer' | 'online' | 'check',
+    payment_method: 'monthly_fee' as 'monthly_fee' | 'registration' | 'materials' | 'penalty' | 'refund' | 'other',
+    notes: ''
+  })
 
-  // البيانات التجريبية للمدفوعات
-  const payments = [
-    {
-      id: 1,
-      receiptNumber: 'REC-2025-001',
-      studentName: 'أحمد محمد علي',
-      amount: 300,
-      paymentDate: '2025-09-08',
-      paymentType: 'cash',
-      paymentMethod: 'monthly_fee',
-      status: 'completed',
-      notes: 'رسوم شهر سبتمبر'
-    },
-    {
-      id: 2,
-      receiptNumber: 'REC-2025-002',
-      studentName: 'فاطمة حسن أحمد',
-      amount: 250,
-      paymentDate: '2025-09-07',
-      paymentType: 'bank_transfer',
-      paymentMethod: 'monthly_fee',
-      status: 'completed',
-      notes: 'رسوم شهر سبتمبر'
-    },
-    {
-      id: 3,
-      receiptNumber: 'REC-2025-003',
-      studentName: 'محمد حسن',
-      amount: 400,
-      paymentDate: '2025-09-06',
-      paymentType: 'cash',
-      paymentMethod: 'registration',
-      status: 'completed',
-      notes: 'رسوم تسجيل جديد'
-    },
-    {
-      id: 4,
-      receiptNumber: 'REC-2025-004',
-      studentName: 'عائشة علي',
-      amount: 150,
-      paymentDate: '2025-09-05',
-      paymentType: 'online',
-      paymentMethod: 'materials',
-      status: 'pending',
-      notes: 'رسوم الكتب والمواد'
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [paymentsData, studentsData, coursesData] = await Promise.all([
+        getPayments(),
+        getStudents(),
+        getCourses()
+      ])
+      setPayments(paymentsData || [])
+      setStudents(studentsData || [])
+      setCourses(coursesData || [])
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await createPayment({
+        ...formData,
+        amount: parseFloat(formData.amount),
+        payment_date: new Date().toISOString().split('T')[0],
+        status: 'completed'
+      })
+      
+      setIsAddDialogOpen(false)
+      setFormData({
+        student_id: '',
+        course_id: '',
+        amount: '',
+        payment_type: 'cash',
+        payment_method: 'monthly_fee',
+        notes: ''
+      })
+      fetchData()
+    } catch (error) {
+      console.error('Error creating payment:', error)
+      alert('حدث خطأ أثناء إضافة الدفعة')
+    }
+  }
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    const studentName = (payment as any).students?.name || 'غير محدد'
+    const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         payment.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter
-    const matchesType = typeFilter === 'all' || payment.paymentMethod === typeFilter
+    const matchesType = typeFilter === 'all' || payment.payment_method === typeFilter
     
     return matchesSearch && matchesStatus && matchesType
   })
@@ -97,50 +113,68 @@ export default function PaymentsPage() {
         return <Badge variant="default" className="bg-orange-100 text-orange-800">معلق</Badge>
       case 'cancelled':
         return <Badge variant="destructive">ملغي</Badge>
+      case 'refunded':
+        return <Badge variant="outline">مسترد</Badge>
       default:
-        return <Badge variant="outline">غير محدد</Badge>
+        return <Badge variant="outline">{status}</Badge>
     }
   }
 
   const getPaymentTypeIcon = (type: string) => {
     switch (type) {
-      case 'cash':
-        return <Banknote className="h-4 w-4 text-green-600" />
-      case 'bank_transfer':
-        return <Building2 className="h-4 w-4 text-blue-600" />
-      case 'online':
-        return <Smartphone className="h-4 w-4 text-purple-600" />
-      default:
-        return <CreditCard className="h-4 w-4" />
+      case 'cash': return <Banknote className="h-4 w-4 text-green-600" />
+      case 'bank_transfer': return <Building2 className="h-4 w-4 text-blue-600" />
+      case 'online': return <Smartphone className="h-4 w-4 text-purple-600" />
+      case 'check': return <Receipt className="h-4 w-4 text-orange-600" />
+      default: return <CreditCard className="h-4 w-4" />
     }
   }
 
   const getPaymentTypeName = (type: string) => {
     switch (type) {
-      case 'cash':
-        return 'نقدي'
-      case 'bank_transfer':
-        return 'تحويل بنكي'
-      case 'online':
-        return 'دفع إلكتروني'
-      default:
-        return 'غير محدد'
+      case 'cash': return 'نقد'
+      case 'bank_transfer': return 'تحويل بنكي'
+      case 'online': return 'دفع إلكتروني'
+      case 'check': return 'شيك'
+      default: return type
     }
   }
 
   const getPaymentMethodName = (method: string) => {
     switch (method) {
-      case 'monthly_fee':
-        return 'رسوم شهرية'
-      case 'registration':
-        return 'رسوم تسجيل'
-      case 'materials':
-        return 'رسوم مواد'
-      case 'other':
-        return 'أخرى'
-      default:
-        return 'غير محدد'
+      case 'monthly_fee': return 'رسوم شهرية'
+      case 'registration': return 'رسوم تسجيل'
+      case 'materials': return 'رسوم مواد'
+      case 'penalty': return 'غرامة'
+      case 'refund': return 'استرداد'
+      case 'other': return 'أخرى'
+      default: return method
     }
+  }
+
+  const getTodaysTotal = () => {
+    const today = new Date().toISOString().split('T')[0]
+    return payments
+      .filter(p => p.payment_date === today && p.status === 'completed')
+      .reduce((sum, p) => sum + p.amount, 0)
+  }
+
+  const getMonthlyTotal = () => {
+    const currentMonth = new Date().toISOString().slice(0, 7)
+    return payments
+      .filter(p => p.payment_date.startsWith(currentMonth) && p.status === 'completed')
+      .reduce((sum, p) => sum + p.amount, 0)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-xl text-slate-600">جاري تحميل بيانات المدفوعات...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -160,7 +194,7 @@ export default function PaymentsPage() {
                 إدارة المدفوعات
               </h1>
               <p className="text-slate-600 text-lg">
-                تسجيل ومتابعة مدفوعات الطلاب والإيصالات
+                تسجيل ومتابعة جميع المدفوعات والإيصالات
               </p>
             </div>
           </div>
@@ -168,63 +202,53 @@ export default function PaymentsPage() {
             <DialogTrigger asChild>
               <Button size="lg">
                 <Plus className="h-4 w-4 ml-2" />
-                تسجيل دفعة جديدة
+                إضافة دفعة جديدة
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>تسجيل دفعة جديدة</DialogTitle>
+                <DialogTitle>إضافة دفعة جديدة</DialogTitle>
                 <DialogDescription>
-                  أدخل بيانات الدفعة الجديدة
+                  أدخل تفاصيل الدفعة الجديدة
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="student">الطالب</Label>
-                    <Select>
+                    <Label htmlFor="student">الطالب *</Label>
+                    <Select 
+                      value={formData.student_id} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, student_id: value }))}
+                      required
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الطالب" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="student1">أحمد محمد علي</SelectItem>
-                        <SelectItem value="student2">فاطمة حسن أحمد</SelectItem>
-                        <SelectItem value="student3">محمد حسن</SelectItem>
-                        <SelectItem value="student4">عائشة علي</SelectItem>
+                        {students.map((student) => (
+                          <SelectItem key={student.id} value={student.id}>
+                            {student.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="amount">المبلغ (ر.س)</Label>
-                    <Input id="amount" type="number" placeholder="0.00" />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="paymentType">طريقة الدفع</Label>
-                    <Select>
+                    <Label htmlFor="course">الدورة (اختياري)</Label>
+                    <Select 
+                      value={formData.course_id} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, course_id: value }))}
+                    >
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر طريقة الدفع" />
+                        <SelectValue placeholder="اختر الدورة" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cash">نقدي</SelectItem>
-                        <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
-                        <SelectItem value="online">دفع إلكتروني</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="paymentMethod">نوع الدفعة</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر نوع الدفعة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="monthly_fee">رسوم شهرية</SelectItem>
-                        <SelectItem value="registration">رسوم تسجيل</SelectItem>
-                        <SelectItem value="materials">رسوم مواد</SelectItem>
-                        <SelectItem value="other">أخرى</SelectItem>
+                        <SelectItem value="">بدون دورة محددة</SelectItem>
+                        {courses.map((course) => (
+                          <SelectItem key={course.id} value={course.id}>
+                            {course.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -232,29 +256,74 @@ export default function PaymentsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="paymentDate">تاريخ الدفع</Label>
-                    <Input id="paymentDate" type="date" />
+                    <Label htmlFor="amount">المبلغ *</Label>
+                    <Input 
+                      id="amount" 
+                      type="number" 
+                      placeholder="0.00" 
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="receiptNumber">رقم الإيصال</Label>
-                    <Input id="receiptNumber" placeholder="سيتم إنشاؤه تلقائياً" disabled />
+                    <Label htmlFor="paymentType">طريقة الدفع</Label>
+                    <Select 
+                      value={formData.payment_type} 
+                      onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">نقد</SelectItem>
+                        <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
+                        <SelectItem value="online">دفع إلكتروني</SelectItem>
+                        <SelectItem value="check">شيك</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="notes">ملاحظات</Label>
-                  <Input id="notes" placeholder="أدخل أي ملاحظات إضافية" />
+                  <Label htmlFor="paymentMethod">نوع الدفعة</Label>
+                  <Select 
+                    value={formData.payment_method} 
+                    onValueChange={(value: any) => setFormData(prev => ({ ...prev, payment_method: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly_fee">رسوم شهرية</SelectItem>
+                      <SelectItem value="registration">رسوم تسجيل</SelectItem>
+                      <SelectItem value="materials">رسوم مواد</SelectItem>
+                      <SelectItem value="penalty">غرامة</SelectItem>
+                      <SelectItem value="other">أخرى</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">الملاحظات</Label>
+                  <Input 
+                    id="notes" 
+                    placeholder="أدخل أي ملاحظات إضافية"
+                    value={formData.notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     إلغاء
                   </Button>
-                  <Button onClick={() => setIsAddDialogOpen(false)}>
+                  <Button type="submit">
                     حفظ الدفعة
                   </Button>
                 </div>
-              </div>
+              </form>
             </DialogContent>
           </Dialog>
         </div>
@@ -271,9 +340,9 @@ export default function PaymentsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-800">
-              {payments.filter(p => p.paymentDate === '2025-09-08').reduce((sum, p) => sum + p.amount, 0).toLocaleString()} ر.س
+              {getTodaysTotal().toLocaleString()} ر.س
             </div>
-            <p className="text-xs text-green-600">+3 دفعات اليوم</p>
+            <p className="text-xs text-green-600">دفعات اليوم</p>
           </CardContent>
         </Card>
 
@@ -316,9 +385,9 @@ export default function PaymentsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-800">
-              {payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString()} ر.س
+              {getMonthlyTotal().toLocaleString()} ر.س
             </div>
-            <p className="text-xs text-green-600">+15% من الشهر الماضي</p>
+            <p className="text-xs text-green-600">هذا الشهر</p>
           </CardContent>
         </Card>
       </div>
@@ -404,11 +473,13 @@ export default function PaymentsPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Receipt className="h-4 w-4 text-slate-500" />
-                        <span className="font-mono text-sm">{payment.receiptNumber}</span>
+                        <span className="font-mono text-sm">{payment.receipt_number}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <p className="font-medium text-slate-800">{payment.studentName}</p>
+                      <p className="font-medium text-slate-800">
+                        {(payment as any).students?.name || 'غير محدد'}
+                      </p>
                     </TableCell>
                     <TableCell>
                       <span className="text-green-600 font-bold text-lg">
@@ -418,18 +489,18 @@ export default function PaymentsPage() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-slate-500" />
-                        <span className="text-sm">{payment.paymentDate}</span>
+                        <span className="text-sm">{payment.payment_date}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {getPaymentTypeIcon(payment.paymentType)}
-                        <span className="text-sm">{getPaymentTypeName(payment.paymentType)}</span>
+                        {getPaymentTypeIcon(payment.payment_type)}
+                        <span className="text-sm">{getPaymentTypeName(payment.payment_type)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {getPaymentMethodName(payment.paymentMethod)}
+                        {getPaymentMethodName(payment.payment_method)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -443,9 +514,6 @@ export default function PaymentsPage() {
                         <Button variant="ghost" size="sm">
                           <PrinterIcon className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Receipt className="h-4 w-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -453,6 +521,11 @@ export default function PaymentsPage() {
               </TableBody>
             </Table>
           </div>
+          {filteredPayments.length === 0 && (
+            <div className="text-center py-8 text-slate-500">
+              لا توجد مدفوعات للعرض
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

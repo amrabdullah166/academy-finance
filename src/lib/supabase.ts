@@ -194,10 +194,36 @@ export const createPayment = async (payment: Omit<Payment, 'id' | 'created_at' |
   const { data, error } = await supabase
     .from('payments')
     .insert([payment])
-    .select()
+    .select(`
+      *,
+      students (name)
+    `)
   
   if (error) throw error
   return data[0]
+}
+
+export const updatePayment = async (id: string, updates: Partial<Payment>) => {
+  const { data, error } = await supabase
+    .from('payments')
+    .update(updates)
+    .eq('id', id)
+    .select(`
+      *,
+      students (name)
+    `)
+  
+  if (error) throw error
+  return data[0]
+}
+
+export const deletePayment = async (id: string) => {
+  const { error } = await supabase
+    .from('payments')
+    .delete()
+    .eq('id', id)
+  
+  if (error) throw error
 }
 
 // Expenses Functions
@@ -596,9 +622,119 @@ export const getRecentPayments = async (limit = 5) => {
   return data
 }
 
-export const getNotifications = async (limit = 10) => {
+// Monthly Subscriptions Functions
+export const getMonthlySubscriptions = async () => {
+  const { data, error } = await supabase
+    .from('monthly_subscriptions')
+    .select(`
+      *,
+      students (id, name, email, phone),
+      courses (id, name, monthly_fee)
+    `)
+    .order('due_date', { ascending: false })
+  
+  if (error) throw error
+  return data
+}
+
+export const createMonthlySubscription = async (subscription: {
+  student_id: string
+  course_id: string
+  subscription_month: number
+  subscription_year: number
+  amount: number
+  discount_amount?: number
+  final_amount: number
+  due_date: string
+}) => {
+  const { data, error } = await supabase
+    .from('monthly_subscriptions')
+    .insert([subscription])
+    .select(`
+      *,
+      students (name),
+      courses (name)
+    `)
+  
+  if (error) throw error
+  return data[0]
+}
+
+export const getOverdueSubscriptions = async () => {
+  const today = new Date().toISOString().split('T')[0]
+  const { data, error } = await supabase
+    .from('monthly_subscriptions')
+    .select(`
+      *,
+      students (id, name, phone, guardian_phone),
+      courses (id, name, monthly_fee)
+    `)
+    .eq('payment_status', 'pending')
+    .lt('due_date', today)
+    .order('due_date', { ascending: true })
+  
+  if (error) throw error
+  return data
+}
+
+export const updateSubscriptionPayment = async (subscriptionId: string, paymentId: string) => {
+  const { data, error } = await supabase
+    .from('monthly_subscriptions')
+    .update({ 
+      payment_status: 'paid',
+      payment_date: new Date().toISOString().split('T')[0],
+      payment_id: paymentId
+    })
+    .eq('id', subscriptionId)
+    .select()
+  
+  if (error) throw error
+  return data[0]
+}
+
+// Activities and Notifications Functions
+export const getNotifications = async (userId?: string, isRead?: boolean) => {
+  let query = supabase
+    .from('notifications')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
+
+  if (isRead !== undefined) {
+    query = query.eq('is_read', isRead)
+  }
+
+  const { data, error } = await query
+  
+  if (error) throw error
+  return data || []
+}
+
+export const createNotification = async (notification: Omit<Notification, 'id' | 'created_at' | 'is_read'>) => {
   const { data, error } = await supabase
     .from('notifications')
+    .insert([{ ...notification, is_read: false }])
+    .select()
+  
+  if (error) throw error
+  return data[0]
+}
+
+export const markNotificationAsRead = async (id: string) => {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('id', id)
+  
+  if (error) throw error
+}
+
+export const getActivities = async (limit = 20) => {
+  const { data, error } = await supabase
+    .from('activities')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit)

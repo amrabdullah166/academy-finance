@@ -25,7 +25,7 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { getStudents, createStudent, getCourses, enrollStudentInCourse, getCoursesByStudent, getStudentFinancialSummary, Student } from '@/lib/supabase'
+import { getStudents, createStudent, Student } from '@/lib/supabase'
 
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('')

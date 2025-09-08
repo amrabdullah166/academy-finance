@@ -1,6 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
-@import "tw-animate-css";
+
+/* Desktop Navigation Force Show */
+@media (min-width: 768px) {
+  .desktop-navigation {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 16rem !important;
+    height: 100vh !important;
+    background: white !important;
+    border-left: 1px solid #e5e7eb !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    z-index: 50 !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Mobile Navigation Force Hide */
+@media (max-width: 767px) {
+  .desktop-navigation,
+  .hidden.md\:block {
+    display: none !important;
+  }
+}
 
 @custom-variant dark (&:is(.dark *));
 

@@ -23,8 +23,8 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-gray-50 min-h-screen font-cairo" dir="rtl">
         <Navigation />
-        <main className="md:mr-64 min-h-screen bg-gray-50">
-          <div className="p-6">
+        <main className="main-content-desktop md:mr-64 min-h-screen bg-gray-50">
+          <div className="p-6 pt-20 md:pt-6">
             {children}
           </div>
         </main>

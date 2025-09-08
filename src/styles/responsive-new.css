@@ -1,5 +1,26 @@
 /* RTL Support and Mobile Responsiveness - تحسينات شاملة */
 
+/* تحسين النافجيشن للكمبيوتر */
+@media (min-width: 768px) {
+  .desktop-navigation {
+    display: block !important;
+    position: fixed !important;
+    top: 0;
+    right: 0;
+    width: 16rem;
+    height: 100vh;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    overflow-y: auto;
+  }
+  
+  .main-content-desktop {
+    margin-right: 16rem !important;
+  }
+}
+
 /* إعداد متغيرات اللون */
 :root {
   --primary: #3b82f6;
