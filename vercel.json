@@ -1,8 +1,36 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://wyaweaunabutzpsnogti.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5YXdlYXVuYWJ1dHpwc25vZ3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMTY3NjEsImV4cCI6MjA3Mjg5Mjc2MX0.jqXqTS2uCiZCNzO9u71im6DcQu621RiPsIaZYKIYlC0",
     "NEXT_PUBLIC_APP_NAME": "نظام إدارة الأكاديمية المالي",
     "NEXT_PUBLIC_APP_VERSION": "1.0.0"
-  }
+  },
+  "functions": {
+    "app/**": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["fra1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options", 
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
 }

@@ -2,6 +2,17 @@
 
 This is a [Next.js](https://nextjs.org) project for managing academy finances, built with TypeScript and Supabase.
 
+## Features
+
+- 📊 **Dashboard**: Overview of academy statistics and activities
+- 👥 **Student Management**: Add, edit, and track student information
+- 📚 **Course Management**: Manage courses, fees, and enrollments
+- 💰 **Payment Tracking**: Record and monitor student payments
+- 👨‍💼 **Employee Management**: Manage staff and salary records
+- 💸 **Expense Tracking**: Track academy expenses and categories
+- 📈 **Reports**: Generate financial reports and analytics
+- ⚙️ **Settings**: Configure system preferences
+
 ## Environment Variables Setup
 
 ### For Vercel Deployment
@@ -13,19 +24,68 @@ You need to set the following environment variables in your Vercel project setti
 3. Add the following variables:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://wyaweaunabutzpsnogti.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5YXdlYXVuYWJ1dHpwc25vZ3RpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMTY3NjEsImV4cCI6MjA3Mjg5Mjc2MX0.jqXqTS2uCiZCNzO9u71im6DcQu621RiPsIaZYKIYlC0
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 NEXT_PUBLIC_APP_NAME=نظام إدارة الأكاديمية المالي
 NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
 
+**Note**: Get your Supabase URL and anon key from your [Supabase project dashboard](https://supabase.com/dashboard).
+
 ### For Local Development
 
-Create a `.env.local` file in the project root with the same variables as shown in `.env.example`.
+1. Copy `.env.example` to `.env.local`
+2. Replace the placeholder values with your actual Supabase credentials
+3. The app will work with mock data if Supabase is not configured
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies:
+
+```bash
+npm install
+```
+
+Then, run the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Build and Deploy
+
+### Local Build
+
+```bash
+npm run build
+```
+
+### Deploy to Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new).
+
+1. Connect your GitHub repository to Vercel
+2. Set the required environment variables
+3. Deploy automatically on every push
+
+## Database Schema
+
+The app uses Supabase with the following main tables:
+- `students` - Student information
+- `courses` - Course details and pricing
+- `payments` - Payment records
+- `expenses` - Academy expenses
+- `employees` - Staff information
+- `student_courses` - Enrollment relationships
+
+## Fallback Mode
+
+The application includes fallback mechanisms:
+- ✅ Works with mock data when Supabase is not configured
+- ✅ Graceful error handling for database operations
+- ✅ Static generation support for better performance
 
 ```bash
 npm run dev
