@@ -25,32 +25,28 @@ import {
 import Link from 'next/link'
 import { 
   getEnhancedDashboardStats, 
-  getRecentPayments, 
   getNotifications, 
-  getStudentCourses, 
   getRecentActivities,
   DashboardStats, 
-  Payment as PaymentType, 
-  StudentCourse, 
   Notification as NotificationType 
 } from '@/lib/supabase'
 
-interface PaymentWithStudent extends PaymentType {
-  students?: {
-    name: string
-    email?: string
-  }
-}
+// interface PaymentWithStudent extends PaymentType {
+//   students?: {
+//     name: string
+//     email?: string
+//   }
+// }
 
-interface EnrollmentWithDetails extends StudentCourse {
-  students?: {
-    name: string
-    email?: string
-  }
-  courses?: {
-    name: string
-  }
-}
+// interface EnrollmentWithDetails extends StudentCourse {
+//   students?: {
+//     name: string
+//     email?: string
+//   }
+//   courses?: {
+//     name: string
+//   }
+// }
 
 interface RecentActivity {
   id: string
@@ -74,8 +70,8 @@ export default function Dashboard() {
     overdueSubscriptions: 0
   })
   
-  const [recentPayments, setRecentPayments] = useState<PaymentWithStudent[]>([])
-  const [recentEnrollments, setRecentEnrollments] = useState<EnrollmentWithDetails[]>([])
+  // const [recentPayments, setRecentPayments] = useState<PaymentWithStudent[]>([])
+  // const [recentEnrollments, setRecentEnrollments] = useState<EnrollmentWithDetails[]>([])
   const [notifications, setNotifications] = useState<NotificationType[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,21 +82,17 @@ export default function Dashboard() {
       
       const [
         dashboardStats,
-        payments,
-        enrollments,
         notifs,
         activities
       ] = await Promise.all([
         getEnhancedDashboardStats(),
-        getRecentPayments(5),
-        getStudentCourses(),
         getNotifications(undefined, false),
         getRecentActivities(8)
       ])
 
       setStats(dashboardStats)
-      setRecentPayments(payments || [])
-      setRecentEnrollments(enrollments?.slice(0, 5) || [])
+      // setRecentPayments(payments || [])
+      // setRecentEnrollments(enrollments?.slice(0, 5) || [])
       setNotifications(notifs || [])
       setRecentActivities(activities || [])
 

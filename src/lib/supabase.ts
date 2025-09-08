@@ -339,10 +339,18 @@ export const getRecentActivities = async (limit = 10) => {
 
     // إضافة المدفوعات
     if (recentPayments) {
-      activities.push(...recentPayments.map((payment: any) => ({
+      activities.push(...recentPayments.map((payment: {
+        id: string;
+        amount: number;
+        payment_date: string;
+        payment_method: string;
+        status: string;
+        created_at: string;
+        students?: { name: string; email: string }[];
+      }) => ({
         id: `payment-${payment.id}`,
         type: 'payment' as const,
-        description: `دفعة من ${payment.students?.name || 'غير محدد'} - ${payment.payment_method === 'monthly_fee' ? 'اشتراك شهري' : getPaymentMethodName(payment.payment_method)}`,
+        description: `دفعة من ${payment.students?.[0]?.name || 'غير محدد'} - ${payment.payment_method === 'monthly_fee' ? 'اشتراك شهري' : getPaymentMethodName(payment.payment_method)}`,
         amount: payment.amount,
         date: payment.payment_date,
         status: payment.status,
@@ -357,13 +365,13 @@ export const getRecentActivities = async (limit = 10) => {
         enrollment_date: string; 
         status: string; 
         created_at: string;
-        students?: { name: string }; 
-        courses?: { name: string; monthly_fee: number } 
+        students?: { name: string; email: string }[]; 
+        courses?: { name: string; monthly_fee: number }[] 
       }) => ({
         id: `enrollment-${enrollment.id}`,
         type: 'enrollment' as const,
-        description: `تسجيل ${enrollment.students?.name || 'غير محدد'} في ${enrollment.courses?.name || 'غير محدد'}`,
-        amount: enrollment.courses?.monthly_fee || 0,
+        description: `تسجيل ${enrollment.students?.[0]?.name || 'غير محدد'} في ${enrollment.courses?.[0]?.name || 'غير محدد'}`,
+        amount: enrollment.courses?.[0]?.monthly_fee || 0,
         date: enrollment.enrollment_date,
         status: enrollment.status,
         created_at: enrollment.created_at

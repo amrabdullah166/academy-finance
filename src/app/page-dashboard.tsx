@@ -59,8 +59,8 @@ export default function Dashboard() {
     overdueSubscriptions: 0
   })
   
-  const [recentPayments, setRecentPayments] = useState<Payment[]>([])
-  const [recentEnrollments, setRecentEnrollments] = useState<Payment[]>([])
+  // const [recentPayments, setRecentPayments] = useState<Payment[]>([])
+  // const [recentEnrollments, setRecentEnrollments] = useState<Payment[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,8 +86,8 @@ export default function Dashboard() {
       ])
 
       setStats(dashboardStats)
-      setRecentPayments(payments || [])
-      setRecentEnrollments(enrollments?.slice(0, 5) || [])
+      // setRecentPayments(payments || [])
+      // setRecentEnrollments(enrollments?.slice(0, 5) || [])
       setNotifications(notifs || [])
 
       // Combine recent activities
