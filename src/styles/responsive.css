@@ -1,0 +1,280 @@
+/* Additional responsive utilities for RTL layout */
+
+/* Arabic font family */
+body {
+  font-family: 'Cairo', 'Noto Sans Arabic', 'Tajawal', 'Segoe UI', sans-serif !important;
+}
+
+/* RTL specific styles */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left {
+  text-align: left !important;
+}
+
+[dir="rtl"] .text-right {
+  text-align: right !important;
+}
+
+/* Mobile responsive navigation */
+@media (max-width: 768px) {
+  .mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+  
+  .mobile-menu-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 320px;
+    max-width: 85vw;
+    background: white;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    box-shadow: -10px 0 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .mobile-menu-panel.open {
+    transform: translateX(0);
+  }
+  
+  /* Ensure mobile content doesn't go under header */
+  .mobile-content {
+    padding-top: 80px;
+  }
+}
+
+/* Better responsive grid */
+.responsive-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}
+
+/* Improved card responsiveness */
+.responsive-card {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.responsive-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 768px) {
+  .responsive-card {
+    padding: 1.5rem;
+  }
+}
+
+/* Arabic number formatting */
+.arabic-numbers {
+  font-feature-settings: "lnum" 1;
+  font-variant-numeric: lining-nums;
+}
+
+/* Better table responsiveness for Arabic */
+@media (max-width: 768px) {
+  .responsive-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .responsive-table table {
+    width: 100%;
+    min-width: 600px;
+  }
+  
+  .responsive-table th,
+  .responsive-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Fix button layouts for mobile */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .button-group {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+/* Improved spacing for Arabic text */
+.arabic-content {
+  line-height: 1.8;
+  letter-spacing: 0.025em;
+}
+
+.arabic-content h1,
+.arabic-content h2,
+.arabic-content h3 {
+  line-height: 1.4;
+  margin-bottom: 0.5em;
+}
+
+/* Better form layouts */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  text-align: right;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  text-align: right;
+  direction: rtl;
+}
+
+/* Responsive text sizes */
+.text-responsive-sm {
+  font-size: 0.875rem;
+}
+
+.text-responsive-base {
+  font-size: 0.875rem;
+}
+
+.text-responsive-lg {
+  font-size: 1rem;
+}
+
+.text-responsive-xl {
+  font-size: 1.125rem;
+}
+
+.text-responsive-2xl {
+  font-size: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-base {
+    font-size: 1rem;
+  }
+  
+  .text-responsive-lg {
+    font-size: 1.125rem;
+  }
+  
+  .text-responsive-xl {
+    font-size: 1.25rem;
+  }
+  
+  .text-responsive-2xl {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .text-responsive-xl {
+    font-size: 1.5rem;
+  }
+  
+  .text-responsive-2xl {
+    font-size: 1.875rem;
+  }
+}
+
+/* Better status badge styles */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Loading state improvements */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 0.5rem;
+}
+
+/* Better modal/dialog responsiveness */
+@media (max-width: 640px) {
+  .dialog-content {
+    margin: 1rem;
+    width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+/* Improved dashboard layout */
+.dashboard-container {
+  width: 100%;
+  max-width: none;
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-container {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-container {
+    padding: 2rem;
+  }
+}
+
+/* Fix overflow issues */
+.content-wrapper {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* Better print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-full-width {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
