@@ -467,61 +467,61 @@ export default function PaymentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>رقم الإيصال</TableHead>
-                  <TableHead>الطالب</TableHead>
-                  <TableHead>المبلغ</TableHead>
-                  <TableHead>التاريخ</TableHead>
-                  <TableHead>طريقة الدفع</TableHead>
-                  <TableHead>نوع الدفعة</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>الملاحظات</TableHead>
-                  <TableHead>الإجراءات</TableHead>
+                  <TableHead className="text-right">رقم الإيصال</TableHead>
+                  <TableHead className="text-right">الطالب</TableHead>
+                  <TableHead className="text-right">المبلغ</TableHead>
+                  <TableHead className="text-right">التاريخ</TableHead>
+                  <TableHead className="text-right">طريقة الدفع</TableHead>
+                  <TableHead className="text-right">نوع الدفعة</TableHead>
+                  <TableHead className="text-center">الحالة</TableHead>
+                  <TableHead className="text-right">الملاحظات</TableHead>
+                  <TableHead className="text-center">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="text-right rtl-content">
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="font-mono text-sm rtl-content">{payment.receipt_number}</span>
                         <Receipt className="h-4 w-4 text-slate-500" />
-                        <span className="font-mono text-sm">{payment.receipt_number}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <p className="font-medium text-slate-800">
+                    <TableCell className="text-right rtl-content">
+                      <p className="font-medium text-slate-800 rtl-content">
                         {payment.students?.name || 'غير محدد'}
                       </p>
                     </TableCell>
-                    <TableCell>
-                      <span className="text-green-600 font-bold text-lg">
+                    <TableCell className="text-right rtl-content">
+                      <span className="text-green-600 font-bold text-lg rtl-content">
                         {payment.amount.toLocaleString()} دينار
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
+                    <TableCell className="text-right rtl-content">
+                      <div className="flex items-center gap-1 justify-end">
+                        <span className="text-sm rtl-content">{payment.payment_date}</span>
                         <Calendar className="h-3 w-3 text-slate-500" />
-                        <span className="text-sm">{payment.payment_date}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="text-right rtl-content">
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="text-sm rtl-content">{getPaymentTypeName(payment.payment_type)}</span>
                         {getPaymentTypeIcon(payment.payment_type)}
-                        <span className="text-sm">{getPaymentTypeName(payment.payment_type)}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
+                    <TableCell className="text-right rtl-content">
+                      <Badge variant="secondary" className="rtl-content">
                         {getPaymentMethodName(payment.payment_method)}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       {getStatusBadge(payment.status)}
                     </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-slate-600">{payment.notes}</span>
+                    <TableCell className="text-right rtl-content">
+                      <span className="text-sm text-slate-600 rtl-content">{payment.notes}</span>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                    <TableCell className="text-center">
+                      <div className="flex gap-2 justify-center">
                         <Button variant="ghost" size="sm">
                           <PrinterIcon className="h-4 w-4" />
                         </Button>

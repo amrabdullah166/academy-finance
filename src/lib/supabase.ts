@@ -505,6 +505,20 @@ export const createCourse = async (course: Omit<Course, 'id' | 'created_at' | 'u
   return data[0]
 }
 
+export const updateCourse = async (courseId: string, course: Partial<Omit<Course, 'id' | 'created_at' | 'updated_at'>>) => {
+  const { data, error } = await supabase
+    .from('courses')
+    .update({
+      ...course,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', courseId)
+    .select()
+  
+  if (error) throw error
+  return data[0]
+}
+
 export const deleteCourse = async (courseId: string) => {
   try {
     // الحصول على معلومات الكورس قبل الحذف للتأكد من وجوده

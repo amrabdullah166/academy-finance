@@ -503,61 +503,70 @@ export default function SubscriptionsPageNew() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>الطالب</TableHead>
-                  <TableHead>الدورة</TableHead>
-                  <TableHead>الشهر/السنة</TableHead>
-                  <TableHead>المبلغ الأصلي</TableHead>
-                  <TableHead>الخصم</TableHead>
-                  <TableHead>المبلغ النهائي</TableHead>
-                  <TableHead>تاريخ الاستحقاق</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>الإجراءات</TableHead>
+                  <TableHead className="text-right">الطالب</TableHead>
+                  <TableHead className="text-right">الدورة</TableHead>
+                  <TableHead className="text-right">الشهر/السنة</TableHead>
+                  <TableHead className="text-right">المبلغ الأصلي</TableHead>
+                  <TableHead className="text-right">الخصم</TableHead>
+                  <TableHead className="text-right">المبلغ النهائي</TableHead>
+                  <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
+                  <TableHead className="text-right">الحالة</TableHead>
+                  <TableHead className="text-center">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSubscriptions.map((subscription) => (
                   <TableRow key={subscription.id}>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <p className="font-medium text-slate-800">
                         {subscription.students?.name}
                       </p>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <p className="text-slate-700">
                         {subscription.courses?.name}
                       </p>
                     </TableCell>
-                    <TableCell>
-                      <span className="text-sm">
+                    <TableCell className="text-right rtl-content">
+                      <span className="text-sm rtl-content">
                         {getMonthName(subscription.subscription_month)} {subscription.subscription_year}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <span className="text-slate-600">
-                        {subscription.amount.toLocaleString()} دينار
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-orange-600">
-                        {subscription.discount_amount.toLocaleString()} دينار
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-green-600 font-bold">
-                        {subscription.final_amount.toLocaleString()} دينار
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-slate-500" />
-                        <span className="text-sm">{subscription.due_date}</span>
+                    <TableCell className="text-right rtl-content">
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-slate-600 rtl-content">
+                          {subscription.amount.toLocaleString()} دينار
+                        </span>
+                        <DollarSign className="h-3 w-3 text-slate-500" />
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right rtl-content">
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-orange-600 rtl-content">
+                          {subscription.discount_amount.toLocaleString()} دينار
+                        </span>
+                        <DollarSign className="h-3 w-3 text-orange-500" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right rtl-content">
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-green-600 font-bold rtl-content">
+                          {subscription.final_amount.toLocaleString()} دينار
+                        </span>
+                        <DollarSign className="h-3 w-3 text-green-500" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right rtl-content">
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-sm rtl-content">{subscription.due_date}</span>
+                        <Calendar className="h-3 w-3 text-slate-500" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
                       {getStatusBadge(subscription.payment_status)}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
                         {subscription.payment_status === 'pending' && (
                           <Button 
                             variant="outline" 

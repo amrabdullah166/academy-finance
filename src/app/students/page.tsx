@@ -578,87 +578,92 @@ export default function StudentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>الطالب</TableHead>
-                  <TableHead>التواصل</TableHead>
-                  <TableHead>ولي الأمر</TableHead>
-                  <TableHead>المستوى</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>حالة الدفع</TableHead>
-                  <TableHead>المبلغ المتبقي</TableHead>
-                  <TableHead>الخصم</TableHead>
-                  <TableHead>تاريخ التسجيل</TableHead>
-                  <TableHead>الإجراءات</TableHead>
+                  <TableHead className="text-right">الطالب</TableHead>
+                  <TableHead className="text-right">ولي الأمر</TableHead>
+                  <TableHead className="text-right">التواصل</TableHead>
+                  <TableHead className="text-right">المستوى</TableHead>
+                  <TableHead className="text-right">الحالة</TableHead>
+                  <TableHead className="text-right">حالة الدفع</TableHead>
+                  <TableHead className="text-right">المبلغ المتبقي</TableHead>
+                  <TableHead className="text-right">الخصم</TableHead>
+                  <TableHead className="text-right">تاريخ التسجيل</TableHead>
+                  <TableHead className="text-center">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStudents.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-800">{student.name}</p>
+                      <div className="text-right">
+                        <p className="font-semibold text-slate-800 text-base">{student.name}</p>
                         <p className="text-sm text-slate-500">#{student.id.slice(0, 8)}</p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm font-medium text-slate-700">{student.guardian_name}</p>
+                        {student.guardian_phone && (
+                          <div className="flex items-center justify-end gap-1 text-sm">
+                            <span className="text-slate-600">{student.guardian_phone}</span>
+                            <Phone className="h-3 w-3" />
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1 text-right">
                         {student.email && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Mail className="h-3 w-3" />
+                          <div className="flex items-center justify-end gap-1 text-sm">
                             <span className="text-slate-600">{student.email}</span>
+                            <Mail className="h-3 w-3" />
                           </div>
                         )}
                         {student.phone && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Phone className="h-3 w-3" />
+                          <div className="flex items-center justify-end gap-1 text-sm">
                             <span className="text-slate-600">{student.phone}</span>
+                            <Phone className="h-3 w-3" />
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">{student.guardian_name}</p>
-                        <p className="text-xs text-slate-500">{student.guardian_phone}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       {student.grade_level && (
                         <Badge variant="outline">{student.grade_level}</Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       {getStatusBadge(student.status)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       {getPaymentStatusBadge(student.id)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       {(() => {
                         const paymentInfo = getStudentPaymentInfo(student.id)
                         if (!paymentInfo) return <span className="text-slate-500">-</span>
                         return (
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3 text-red-500" />
-                            <span className={`font-medium ${paymentInfo.totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          <div className="flex items-center justify-end gap-1">
+                            <span className={`font-medium rtl-content ${paymentInfo.totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}>
                               {paymentInfo.totalRemaining.toLocaleString()} دينار
                             </span>
+                            <DollarSign className="h-3 w-3 text-red-500" />
                           </div>
                         )
                       })()}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <span className="text-orange-600 font-medium">
                         {student.discount_percentage}%
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3" />
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1 text-sm">
                         <span className="text-slate-600">{student.enrollment_date}</span>
+                        <Calendar className="h-3 w-3" />
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                    <TableCell className="text-center">
+                      <div className="flex justify-center gap-2">
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>

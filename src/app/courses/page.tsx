@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { getCourses, createCourse, getStudents, getPayments, getStudentCourses, deleteCourse } from '@/lib/supabase'
+import { getCourses, createCourse, updateCourse, getStudents, getPayments, getStudentCourses, deleteCourse } from '@/lib/supabase'
 
 interface Course {
   id: string
@@ -162,10 +162,11 @@ export default function CoursesPage() {
       }
 
       if (editingCourse) {
-        // Update logic would go here
-        console.log('Update course:', courseData)
+        await updateCourse(editingCourse.id, courseData)
+        alert('تم تحديث الكورس بنجاح!')
       } else {
         await createCourse(courseData)
+        alert('تم إضافة الكورس بنجاح!')
       }
 
       setIsDialogOpen(false)
@@ -174,7 +175,10 @@ export default function CoursesPage() {
       loadData()
     } catch (error) {
       console.error('خطأ في حفظ الكورس:', error)
-      alert('حدث خطأ أثناء حفظ الكورس')
+      const errorMessage = editingCourse 
+        ? 'حدث خطأ أثناء تحديث الكورس. يرجى المحاولة مرة أخرى.'
+        : 'حدث خطأ أثناء إضافة الكورس. يرجى المحاولة مرة أخرى.'
+      alert(errorMessage)
     }
   }
 
@@ -278,11 +282,21 @@ export default function CoursesPage() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>
-                {editingCourse ? 'تعديل الكورس' : 'إضافة كورس جديد'}
+              <DialogTitle className="flex items-center gap-2">
+                {editingCourse ? (
+                  <>
+                    <Edit className="h-5 w-5 text-blue-600" />
+                    تعديل الكورس: {editingCourse.name}
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-5 w-5 text-green-600" />
+                    إضافة كورس جديد
+                  </>
+                )}
               </DialogTitle>
               <DialogDescription>
-                {editingCourse ? 'تعديل بيانات الكورس' : 'أدخل بيانات الكورس الجديد'}
+                {editingCourse ? 'تعديل بيانات الكورس المحدد' : 'أدخل بيانات الكورس الجديد'}
               </DialogDescription>
             </DialogHeader>
             
@@ -381,8 +395,18 @@ export default function CoursesPage() {
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   إلغاء
                 </Button>
-                <Button type="submit">
-                  {editingCourse ? 'تحديث' : 'إضافة'}
+                <Button type="submit" className={editingCourse ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"}>
+                  {editingCourse ? (
+                    <>
+                      <Edit className="h-4 w-4 ml-2" />
+                      تحديث الكورس
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 ml-2" />
+                      إضافة كورس
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -485,19 +509,19 @@ export default function CoursesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>اسم الكورس</TableHead>
-                <TableHead>الرسوم الشهرية</TableHead>
-                <TableHead>الطلاب المسجلين</TableHead>
-                <TableHead>الاشتراكات النشطة</TableHead>
-                <TableHead>إجمالي الإيرادات</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead>الإجراءات</TableHead>
+                <TableHead className="text-right">اسم الكورس</TableHead>
+                <TableHead className="text-right">الرسوم الشهرية</TableHead>
+                <TableHead className="text-center">الطلاب المسجلين</TableHead>
+                <TableHead className="text-center">الاشتراكات النشطة</TableHead>
+                <TableHead className="text-right">إجمالي الإيرادات</TableHead>
+                <TableHead className="text-center">الحالة</TableHead>
+                <TableHead className="text-center">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCourses.map((course) => (
                 <TableRow key={course.id}>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <div>
                       <div className="font-medium">{course.name}</div>
                       {course.description && (
@@ -507,25 +531,25 @@ export default function CoursesPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{course.monthly_fee.toLocaleString()} دينار</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
+                  <TableCell className="text-right rtl-content">{course.monthly_fee.toLocaleString()} دينار</TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center gap-1 justify-center">
                       <Users className="h-4 w-4" />
-                      {course.enrolled_students}
+                      <span className="rtl-content">{course.enrolled_students}</span>
                       {course.max_students && (
-                        <span className="text-muted-foreground">
+                        <span className="text-muted-foreground rtl-content">
                           / {course.max_students}
                         </span>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{course.active_subscriptions}</Badge>
+                  <TableCell className="text-center">
+                    <Badge variant="outline" className="rtl-content">{course.active_subscriptions}</Badge>
                   </TableCell>
-                  <TableCell>{course.total_revenue.toLocaleString()} دينار</TableCell>
-                  <TableCell>{getStatusBadge(course.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
+                  <TableCell className="text-right rtl-content">{course.total_revenue.toLocaleString()} دينار</TableCell>
+                  <TableCell className="text-center">{getStatusBadge(course.status)}</TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex gap-2 justify-center">
                       <Button
                         variant="outline"
                         size="sm"
@@ -594,23 +618,23 @@ export default function CoursesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>اسم الطالب</TableHead>
-                      <TableHead>البريد الإلكتروني</TableHead>
-                      <TableHead>الهاتف</TableHead>
-                      <TableHead>حالة الاشتراك</TableHead>
-                      <TableHead>الإجراءات</TableHead>
+                      <TableHead className="text-right">اسم الطالب</TableHead>
+                      <TableHead className="text-right">البريد الإلكتروني</TableHead>
+                      <TableHead className="text-right">الهاتف</TableHead>
+                      <TableHead className="text-center">حالة الاشتراك</TableHead>
+                      <TableHead className="text-center">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {students.slice(0, 5).map((student) => (
                       <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>{student.email || '-'}</TableCell>
-                        <TableCell>{student.phone || '-'}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-medium text-right">{student.name}</TableCell>
+                        <TableCell className="text-right">{student.email || '-'}</TableCell>
+                        <TableCell className="text-right">{student.phone || '-'}</TableCell>
+                        <TableCell className="text-center">
                           <Badge variant="default">نشط</Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                           <Button variant="outline" size="sm">
                             إلغاء التسجيل
                           </Button>

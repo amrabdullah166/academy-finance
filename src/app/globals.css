@@ -49,6 +49,60 @@
   }
 }
 
+/* Table Improvements */
+.table-cell-rtl {
+  text-align: right !important;
+  direction: rtl;
+}
+
+.table-header-rtl {
+  text-align: right !important;
+  direction: rtl;
+  font-weight: 600;
+}
+
+.table-center {
+  text-align: center !important;
+}
+
+/* Force RTL for all content including numbers */
+.text-right {
+  text-align: right !important;
+  direction: rtl !important;
+  unicode-bidi: bidi-override !important;
+}
+
+/* Force all table content to align right */
+table td, table th {
+  direction: rtl !important;
+  unicode-bidi: embed !important;
+}
+
+table .text-right {
+  direction: rtl !important;
+  unicode-bidi: bidi-override !important;
+  text-align: right !important;
+}
+
+table .text-center {
+  direction: rtl !important;
+  unicode-bidi: embed !important;
+  text-align: center !important;
+}
+
+/* Specific fix for numbers and mixed content */
+.rtl-content {
+  direction: rtl !important;
+  unicode-bidi: bidi-override !important;
+  text-align: right !important;
+}
+
+/* Fix for flex containers with RTL */
+.justify-end {
+  direction: rtl !important;
+  justify-content: flex-start !important;
+}
+
 /* Mobile Navigation Force Hide */
 @media (max-width: 767px) {
   .desktop-navigation,
