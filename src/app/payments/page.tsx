@@ -83,6 +83,7 @@ export default function PaymentsPage() {
     try {
       await createPayment({
         ...formData,
+        course_id: formData.course_id === 'none' ? undefined : formData.course_id,
         amount: parseFloat(formData.amount),
         payment_date: new Date().toISOString().split('T')[0],
         status: 'completed'

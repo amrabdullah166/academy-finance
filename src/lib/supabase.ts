@@ -277,6 +277,10 @@ export const createCourse = async (course: Omit<Course, 'id' | 'created_at' | 'u
     .select()
   
   if (error) throw error
+  
+  // لا نضيف أي طلاب تلقائياً - الكورس ينشأ فارغاً
+  // ويمكن إضافة الطلاب لاحقاً من خلال واجهة منفصلة
+  
   return data[0]
 }
 
@@ -375,6 +379,28 @@ export const enrollStudentInCourse = async (studentId: string, courseId: string)
       courses (name, monthly_fee)
     `)
     .single()
+  
+  if (error) throw error
+  return data
+}
+
+// إضافة عدة طلاب للكورس دفعة واحدة
+export const enrollMultipleStudentsInCourse = async (studentIds: string[], courseId: string) => {
+  const enrollments = studentIds.map(studentId => ({
+    student_id: studentId,
+    course_id: courseId,
+    enrollment_date: new Date().toISOString().split('T')[0],
+    status: 'enrolled'
+  }))
+
+  const { data, error } = await supabase
+    .from('student_courses')
+    .insert(enrollments)
+    .select(`
+      *,
+      students (name),
+      courses (name, monthly_fee)
+    `)
   
   if (error) throw error
   return data

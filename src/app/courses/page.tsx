@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { getCourses, createCourse, getStudents, getPayments } from '@/lib/supabase'
+import { getCourses, createCourse, getStudents, getPayments, getStudentCourses } from '@/lib/supabase'
 
 interface Course {
   id: string
@@ -78,16 +78,19 @@ export default function CoursesPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [coursesData, studentsData, paymentsData] = await Promise.all([
+      const [coursesData, studentsData, paymentsData, studentCoursesData] = await Promise.all([
         getCourses(),
         getStudents(),
-        getPayments()
+        getPayments(),
+        getStudentCourses()
       ])
       
       // Calculate stats for each course
       const coursesWithStats = coursesData.map(course => {
-        // Count students enrolled in this course (simplified - in real app you'd have student_courses table)
-        const enrolledStudents = studentsData.filter(s => s.status === 'active').length // Simplified
+        // Count students actually enrolled in this specific course
+        const enrolledStudents = studentCoursesData.filter(sc => 
+          sc.course_id === course.id && sc.status === 'enrolled'
+        ).length
         
         // Calculate revenue from payments for this course
         const coursePayments = paymentsData.filter(p => 

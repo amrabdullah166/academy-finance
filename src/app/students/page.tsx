@@ -25,13 +25,21 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
-import { getStudents, createStudent, Student } from '@/lib/supabase'
+import { 
+  getStudents, 
+  createStudent, 
+  Student, 
+  getCourses, 
+  Course, 
+  enrollStudentInCourse 
+} from '@/lib/supabase'
 
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [students, setStudents] = useState<Student[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
@@ -42,7 +50,8 @@ export default function StudentsPage() {
     grade_level: '',
     discount_percentage: 0,
     address: '',
-    date_of_birth: ''
+    date_of_birth: '',
+    selected_course: '' // إضافة خيار الدورة
   })
 
   useEffect(() => {
@@ -52,10 +61,14 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     try {
       setLoading(true)
-      const data = await getStudents()
-      setStudents(data || [])
+      const [studentsData, coursesData] = await Promise.all([
+        getStudents(),
+        getCourses()
+      ])
+      setStudents(studentsData)
+      setCourses(coursesData.filter(course => course.status === 'active'))
     } catch (error) {
-      console.error('Error fetching students:', error)
+      console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }
@@ -64,11 +77,17 @@ export default function StudentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await createStudent({
+      // إنشاء الطالب
+      const newStudent = await createStudent({
         ...formData,
         status: 'active',
         enrollment_date: new Date().toISOString().split('T')[0]
       })
+      
+      // إذا تم اختيار دورة، سجل الطالب فيها
+      if (formData.selected_course && newStudent?.id) {
+        await enrollStudentInCourse(newStudent.id, formData.selected_course)
+      }
       
       setIsAddDialogOpen(false)
       setFormData({
@@ -80,9 +99,13 @@ export default function StudentsPage() {
         grade_level: '',
         discount_percentage: 0,
         address: '',
-        date_of_birth: ''
+        date_of_birth: '',
+        selected_course: ''
       })
       fetchStudents()
+      
+      // رسالة نجاح
+      alert('تم إضافة الطالب بنجاح' + (formData.selected_course ? ' وتسجيله في الدورة' : ''))
     } catch (error) {
       console.error('Error creating student:', error)
       alert('حدث خطأ أثناء إضافة الطالب')
@@ -258,6 +281,26 @@ export default function StudentsPage() {
                     value={formData.address}
                     onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="course">الدورة (اختياري)</Label>
+                  <Select 
+                    value={formData.selected_course} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, selected_course: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر دورة لتسجيل الطالب فيها" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">بدون دورة</SelectItem>
+                      {courses.map(course => (
+                        <SelectItem key={course.id} value={course.id}>
+                          {course.name} - {course.monthly_fee} ريال
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">

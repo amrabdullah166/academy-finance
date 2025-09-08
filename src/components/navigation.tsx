@@ -34,6 +34,11 @@ const navigationItems = [
     icon: BookOpen
   },
   {
+    name: 'التسجيل في الدورات',
+    href: '/enrollments',
+    icon: UserCheck
+  },
+  {
     name: 'المدفوعات',
     href: '/payments',
     icon: CreditCard
