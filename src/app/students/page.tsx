@@ -29,6 +29,7 @@ import Link from 'next/link'
 import { 
   getStudents, 
   createStudent, 
+  updateStudent,
   Student, 
   getCourses, 
   Course, 
@@ -44,8 +45,10 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null)
+  const [studentToEdit, setStudentToEdit] = useState<Student | null>(null)
   const [students, setStudents] = useState<Student[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus[]>([])
@@ -184,6 +187,82 @@ export default function StudentsPage() {
       console.error('خطأ في حذف الطالب:', error)
       const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير متوقع أثناء حذف الطالب'
       alert(`فشل في حذف الطالب: ${errorMessage}`)
+    }
+  }
+
+  // وظائف التعديل
+  const handleEdit = (student: Student) => {
+    setStudentToEdit(student)
+    setFormData({
+      name: student.name,
+      email: student.email || '',
+      phone: student.phone || '',
+      guardian_name: student.guardian_name || '',
+      guardian_phone: student.guardian_phone || '',
+      grade_level: student.grade_level || '',
+      discount_percentage: student.discount_percentage || 0,
+      address: student.address || '',
+      date_of_birth: student.date_of_birth || '',
+      selected_course: 'none' // لا نغير الكورس في التعديل
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!studentToEdit) return
+
+    try {
+      // التحقق من الحقول المطلوبة
+      if (!formData.name.trim()) {
+        alert('يرجى إدخال اسم الطالب')
+        return
+      }
+      if (!formData.guardian_name.trim()) {
+        alert('يرجى إدخال اسم ولي الأمر')
+        return
+      }
+
+      const updatedStudent = await updateStudent(studentToEdit.id, {
+        name: formData.name.trim(),
+        email: formData.email.trim() || null,
+        phone: formData.phone.trim() || null,
+        guardian_name: formData.guardian_name.trim(),
+        guardian_phone: formData.guardian_phone.trim() || null,
+        grade_level: formData.grade_level.trim() || null,
+        discount_percentage: formData.discount_percentage,
+        address: formData.address.trim() || null,
+        date_of_birth: formData.date_of_birth || null
+      })
+
+      // تحديث الحالة المحلية
+      setStudents(prevStudents => 
+        prevStudents.map(s => s.id === studentToEdit.id ? { ...s, ...updatedStudent } : s)
+      )
+
+      // إعادة تعيين النموذج وإغلاق الحوار
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        guardian_name: '',
+        guardian_phone: '',
+        grade_level: '',
+        discount_percentage: 0,
+        address: '',
+        date_of_birth: '',
+        selected_course: ''
+      })
+      setIsEditDialogOpen(false)
+      setStudentToEdit(null)
+
+      // إعادة تحميل البيانات
+      await fetchStudents()
+
+      alert('تم تحديث بيانات الطالب بنجاح')
+    } catch (error) {
+      console.error('Error updating student:', error)
+      alert('حدث خطأ أثناء تحديث بيانات الطالب')
     }
   }
 
@@ -667,7 +746,12 @@ export default function StudentsPage() {
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit(student)}
+                          title="تعديل بيانات الطالب"
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -746,6 +830,144 @@ export default function StudentsPage() {
               نعم، احذف الطالب
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog تعديل الطالب */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات الطالب</DialogTitle>
+            <DialogDescription>
+              قم بتحديث بيانات الطالب. الحقول المطلوبة مميزة بعلامة *
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleUpdate} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">اسم الطالب *</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="أدخل اسم الطالب"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">البريد الإلكتروني</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="student@example.com"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">رقم الهاتف</Label>
+              <Input
+                id="edit-phone"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="05xxxxxxxx"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-guardian">اسم ولي الأمر *</Label>
+              <Input
+                id="edit-guardian"
+                value={formData.guardian_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, guardian_name: e.target.value }))}
+                placeholder="أدخل اسم ولي الأمر"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-guardian-phone">هاتف ولي الأمر</Label>
+              <Input
+                id="edit-guardian-phone"
+                value={formData.guardian_phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, guardian_phone: e.target.value }))}
+                placeholder="05xxxxxxxx"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-grade">المستوى الدراسي</Label>
+              <Input
+                id="edit-grade"
+                value={formData.grade_level}
+                onChange={(e) => setFormData(prev => ({ ...prev, grade_level: e.target.value }))}
+                placeholder="مثال: الصف الثامن"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-discount">نسبة الخصم (%)</Label>
+              <Input
+                id="edit-discount"
+                type="number"
+                min="0"
+                max="100"
+                value={formData.discount_percentage}
+                onChange={(e) => setFormData(prev => ({ ...prev, discount_percentage: parseInt(e.target.value) || 0 }))}
+                placeholder="0"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-address">العنوان</Label>
+              <Input
+                id="edit-address"
+                value={formData.address}
+                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="أدخل العنوان"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-birthdate">تاريخ الميلاد</Label>
+              <Input
+                id="edit-birthdate"
+                type="date"
+                value={formData.date_of_birth}
+                onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditDialogOpen(false)
+                  setStudentToEdit(null)
+                  setFormData({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    guardian_name: '',
+                    guardian_phone: '',
+                    grade_level: '',
+                    discount_percentage: 0,
+                    address: '',
+                    date_of_birth: '',
+                    selected_course: ''
+                  })
+                }}
+              >
+                إلغاء
+              </Button>
+              <Button type="submit">
+                حفظ التعديلات
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
