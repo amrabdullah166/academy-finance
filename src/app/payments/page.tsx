@@ -350,7 +350,7 @@ export default function PaymentsPage() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
+            <div className="text-2xl font-bold text-slate-800 stat-number">
               {getTodaysTotal().toLocaleString()} دينار
             </div>
             <p className="text-xs text-green-600">دفعات اليوم</p>
@@ -365,10 +365,10 @@ export default function PaymentsPage() {
             <Receipt className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
+            <div className="text-2xl font-bold text-slate-800 stat-number">
               {payments.filter(p => p.status === 'completed').length}
             </div>
-            <p className="text-xs text-blue-600">من أصل {payments.length} دفعة</p>
+            <p className="text-xs text-blue-600 stat-number">من أصل {payments.length} دفعة</p>
           </CardContent>
         </Card>
 
@@ -380,7 +380,7 @@ export default function PaymentsPage() {
             <CreditCard className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
+            <div className="text-2xl font-bold text-slate-800 stat-number">
               {payments.filter(p => p.status === 'pending').length}
             </div>
             <p className="text-xs text-orange-600">يحتاج متابعة</p>
@@ -395,7 +395,7 @@ export default function PaymentsPage() {
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-800">
+            <div className="text-2xl font-bold text-slate-800 stat-number">
               {getMonthlyTotal().toLocaleString()} دينار
             </div>
             <p className="text-xs text-green-600">هذا الشهر</p>
@@ -481,25 +481,25 @@ export default function PaymentsPage() {
               <TableBody>
                 {filteredPayments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell className="text-right rtl-content">
+                    <TableCell className="text-right">
                       <div className="flex items-center gap-2 justify-end">
-                        <span className="font-mono text-sm rtl-content">{payment.receipt_number}</span>
+                        <span className="font-mono text-sm number-fix">{payment.receipt_number}</span>
                         <Receipt className="h-4 w-4 text-slate-500" />
                       </div>
                     </TableCell>
-                    <TableCell className="text-right rtl-content">
-                      <p className="font-medium text-slate-800 rtl-content">
+                    <TableCell className="text-right">
+                      <p className="font-medium text-slate-800">
                         {payment.students?.name || 'غير محدد'}
                       </p>
                     </TableCell>
-                    <TableCell className="text-right rtl-content">
-                      <span className="text-green-600 font-bold text-lg rtl-content">
+                    <TableCell className="text-right">
+                      <span className="text-green-600 font-bold text-lg number-fix">
                         {payment.amount.toLocaleString()} دينار
                       </span>
                     </TableCell>
-                    <TableCell className="text-right rtl-content">
+                    <TableCell className="text-right">
                       <div className="flex items-center gap-1 justify-end">
-                        <span className="text-sm rtl-content">{payment.payment_date}</span>
+                        <span className="text-sm number-fix">{payment.payment_date}</span>
                         <Calendar className="h-3 w-3 text-slate-500" />
                       </div>
                     </TableCell>
