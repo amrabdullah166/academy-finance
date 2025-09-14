@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import '../styles/responsive-new.css'
 import Navigation from '@/components/navigation'
+import Script from 'next/script'
 
 export const metadata: Metadata = {
   title: "أكاديمية بساط العلم - النظام المالي",
@@ -17,6 +18,11 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <head>
   <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Academy Finance" />
         <link 
           href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" 
           rel="stylesheet" 
@@ -29,6 +35,21 @@ export default function RootLayout({
             {children}
           </div>
         </main>
+        <Script id="sw-registration" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                  .then(function(registration) {
+                    console.log('SW registered: ', registration);
+                  })
+                  .catch(function(registrationError) {
+                    console.log('SW registration failed: ', registrationError);
+                  });
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
