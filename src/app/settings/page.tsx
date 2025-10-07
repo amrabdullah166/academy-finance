@@ -17,7 +17,8 @@ import {
   Loader2,
   Save,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Receipt
 } from 'lucide-react'
 import Link from 'next/link'
 import { 
@@ -111,6 +112,40 @@ export default function SettingsPage() {
 
   const getSetting = (key: string) => {
     return settings.find(s => s.setting_key === key)?.setting_value || ''
+  }
+
+  const updateSettingValue = (key: string, value: string) => {
+    setSettings(prev => prev.map(setting => 
+      setting.setting_key === key 
+        ? { ...setting, setting_value: value }
+        : setting
+    ))
+  }
+
+  const handleSaveSettings = async () => {
+    try {
+      setSaving(true)
+      
+      // حفظ جميع الإعدادات
+      const invoiceSettings = [
+        'academy_name', 'academy_phone', 'academy_email', 'academy_address',
+        'academy_logo', 'receipt_footer_text', 'currency_symbol', 'receipt_prefix'
+      ]
+      
+      for (const key of invoiceSettings) {
+        const setting = settings.find(s => s.setting_key === key)
+        if (setting) {
+          await updateSystemSetting(key, setting.setting_value)
+        }
+      }
+      
+      setMessage({type: 'success', text: '✅ تم حفظ إعدادات الفواتير بنجاح!'})
+    } catch (error) {
+      console.error('Error saving invoice settings:', error)
+      setMessage({type: 'error', text: '❌ فشل في حفظ الإعدادات. يرجى المحاولة مرة أخرى.'})
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSaveCopyTemplate = async () => {
@@ -213,8 +248,9 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">الإعدادات العامة</TabsTrigger>
+          <TabsTrigger value="invoices">إعدادات الفواتير</TabsTrigger>
           <TabsTrigger value="reminders">التذكيرات الشهرية</TabsTrigger>
           <TabsTrigger value="payments">إعدادات المدفوعات</TabsTrigger>
         </TabsList>
@@ -305,6 +341,112 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* إعدادات الفواتير */}
+        <TabsContent value="invoices">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                إعدادات الفواتير والإيصالات
+              </CardTitle>
+              <CardDescription>
+                تخصيص معلومات الأكاديمية التي ستظهر في الفواتير والإيصالات
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>اسم الأكاديمية</Label>
+                  <Input
+                    value={getSetting('academy_name')}
+                    onChange={(e) => updateSettingValue('academy_name', e.target.value)}
+                    placeholder="أكاديمية بساط العلم"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>رقم الهاتف</Label>
+                  <Input
+                    value={getSetting('academy_phone')}
+                    onChange={(e) => updateSettingValue('academy_phone', e.target.value)}
+                    placeholder="+962-XX-XXXX-XXX"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>البريد الإلكتروني</Label>
+                  <Input
+                    type="email"
+                    value={getSetting('academy_email')}
+                    onChange={(e) => updateSettingValue('academy_email', e.target.value)}
+                    placeholder="info@academy.com"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>العملة</Label>
+                  <Input
+                    value={getSetting('currency_symbol')}
+                    onChange={(e) => updateSettingValue('currency_symbol', e.target.value)}
+                    placeholder="دينار"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>عنوان الأكاديمية</Label>
+                <Input
+                  value={getSetting('academy_address')}
+                  onChange={(e) => updateSettingValue('academy_address', e.target.value)}
+                  placeholder="أدخل العنوان الكامل للأكاديمية"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>رابط الشعار (اختياري)</Label>
+                <Input
+                  value={getSetting('academy_logo')}
+                  onChange={(e) => updateSettingValue('academy_logo', e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>نص أسفل الإيصال</Label>
+                <Input
+                  value={getSetting('receipt_footer_text')}
+                  onChange={(e) => updateSettingValue('receipt_footer_text', e.target.value)}
+                  placeholder="نشكركم لثقتكم بنا"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>بادئة رقم الإيصال</Label>
+                <Input
+                  value={getSetting('receipt_prefix')}
+                  onChange={(e) => updateSettingValue('receipt_prefix', e.target.value)}
+                  placeholder="INV"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t">
+                <Button 
+                  onClick={handleSaveSettings} 
+                  disabled={saving}
+                  className="gap-2"
+                >
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  حفظ إعدادات الفواتير
+                </Button>
               </div>
             </CardContent>
           </Card>

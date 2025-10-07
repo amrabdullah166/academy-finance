@@ -22,10 +22,17 @@ import {
   Building2,
   Smartphone,
   PrinterIcon,
-  Loader2
+  Loader2,
+  Download,
+  Share2,
+  Eye
 } from 'lucide-react'
 import Link from 'next/link'
-import { getPayments, createPayment, getStudents, getCourses, Payment, Student, Course } from '@/lib/supabase'
+import { getPayments, createPayment, getStudents, getCourses, Payment, Student, Course, getSystemSettings, SystemSetting } from '@/lib/supabase'
+import { PaymentReceipt } from '@/components/PaymentReceipt'
+import { SimplePDFReceipt } from '@/components/SimplePDFReceipt'
+import { generatePaymentReceiptPDF, sharePaymentReceiptPDF, printPaymentReceipt, PDFPayment, AcademyInfo } from '@/lib/pdfUtils'
+import { generateCanvasPDF } from '@/lib/canvasPDF'
 
 interface PaymentWithDetails extends Payment {
   students?: {
@@ -46,6 +53,10 @@ export default function PaymentsPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+  const [settings, setSettings] = useState<SystemSetting[]>([])
+  const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null)
+  const [showReceiptDialog, setShowReceiptDialog] = useState(false)
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   
   const [formData, setFormData] = useState({
     student_id: '',
@@ -63,14 +74,16 @@ export default function PaymentsPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [paymentsData, studentsData, coursesData] = await Promise.all([
+      const [paymentsData, studentsData, coursesData, settingsData] = await Promise.all([
         getPayments(),
         getStudents(),
-        getCourses()
+        getCourses(),
+        getSystemSettings()
       ])
       setPayments(paymentsData || [])
       setStudents(studentsData || [])
       setCourses(coursesData || [])
+      setSettings(settingsData || [])
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -102,6 +115,113 @@ export default function PaymentsPage() {
     } catch (error) {
       console.error('Error creating payment:', error)
       alert('حدث خطأ أثناء إضافة الدفعة')
+    }
+  }
+
+  // دوال معالجة الفواتير
+  const getAcademyInfo = (): AcademyInfo => {
+    const getSetting = (key: string) => settings.find(s => s.setting_key === key)?.setting_value || ''
+    
+    return {
+      name: getSetting('academy_name') || 'أكاديمية بساط العلم',
+      address: getSetting('academy_address') || 'العنوان غير محدد',
+      phone: getSetting('academy_phone') || 'الهاتف غير محدد',
+      email: getSetting('academy_email') || 'البريد الإلكتروني غير محدد',
+      logo: getSetting('academy_logo')
+    }
+  }
+
+  const convertPaymentToPDF = (payment: PaymentWithDetails): PDFPayment => {
+    // العثور على اسم الكورس
+    const course = courses.find(c => c.id === payment.course_id)
+    
+    return {
+      ...payment,
+      course_name: course?.name
+    }
+  }
+
+  const handleShowReceipt = (payment: PaymentWithDetails) => {
+    setSelectedPayment(payment)
+    setShowReceiptDialog(true)
+  }
+
+  const handleDownloadPDF = async (payment: PaymentWithDetails) => {
+    try {
+      setIsGeneratingPDF(true)
+      
+      // تحويل البيانات للتنسيق المطلوب
+      const pdfPayment = convertPaymentToPDF(payment)
+      const academyInfo = getAcademyInfo()
+      
+      // استخدام Canvas للنص العربي
+      await generateCanvasPDF(pdfPayment, academyInfo)
+      
+    } catch (error) {
+      console.error('خطأ في إنتاج PDF:', error)
+      alert('فشل في إنتاج الإيصال. يرجى المحاولة مرة أخرى.')
+    } finally {
+      setIsGeneratingPDF(false)
+    }
+  }
+
+  const handleSharePDF = async (payment: PaymentWithDetails) => {
+    try {
+      setIsGeneratingPDF(true)
+      
+      // التحقق من أن الحوار مفتوح والفاتورة موجودة
+      if (!showReceiptDialog || selectedPayment?.id !== payment.id) {
+        setSelectedPayment(payment)
+        setShowReceiptDialog(true)
+        
+        // انتظار لتحميل الفاتورة
+        setTimeout(async () => {
+          try {
+            const pdfPayment = convertPaymentToPDF(payment)
+            const academyInfo = getAcademyInfo()
+            
+            await sharePaymentReceiptPDF(pdfPayment, academyInfo)
+            setShowReceiptDialog(false)
+          } catch (error) {
+            console.error('خطأ في مشاركة PDF:', error)
+            alert('فشل في مشاركة الإيصال. يرجى المحاولة مرة أخرى.')
+          } finally {
+            setIsGeneratingPDF(false)
+          }
+        }, 1000)
+      } else {
+        // الحوار مفتوح بالفعل
+        try {
+          const pdfPayment = convertPaymentToPDF(payment)
+          const academyInfo = getAcademyInfo()
+          
+          await sharePaymentReceiptPDF(pdfPayment, academyInfo)
+        } catch (error) {
+          console.error('خطأ في مشاركة PDF:', error)
+          alert('فشل في مشاركة الإيصال. يرجى المحاولة مرة أخرى.')
+        } finally {
+          setIsGeneratingPDF(false)
+        }
+      }
+      
+    } catch (error) {
+      console.error('خطأ في تحضير المشاركة:', error)
+      setIsGeneratingPDF(false)
+    }
+  }
+
+  const handlePrintReceipt = (payment: PaymentWithDetails) => {
+    try {
+      setSelectedPayment(payment)
+      setShowReceiptDialog(false)
+      
+      setTimeout(() => {
+        printPaymentReceipt()
+      }, 100)
+      
+    } catch (error) {
+      console.error('خطأ في الطباعة:', error)
+      alert('فشل في طباعة الإيصال.')
     }
   }
 
@@ -522,7 +642,33 @@ export default function PaymentsPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex gap-2 justify-center">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleShowReceipt(payment)}
+                          title="عرض الإيصال"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDownloadPDF(payment)}
+                          disabled={isGeneratingPDF}
+                          title="تحميل PDF"
+                        >
+                          {isGeneratingPDF ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handlePrintReceipt(payment)}
+                          title="طباعة"
+                        >
                           <PrinterIcon className="h-4 w-4" />
                         </Button>
                       </div>
@@ -539,6 +685,71 @@ export default function PaymentsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* حوار عرض الإيصال */}
+      <Dialog open={showReceiptDialog} onOpenChange={setShowReceiptDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-right">إيصال الدفع</DialogTitle>
+            <DialogDescription className="text-right">
+              معاينة وطباعة إيصال الدفع
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPayment && (
+            <div className="space-y-4">
+              {/* أزرار الإجراءات */}
+              <div className="flex gap-2 justify-end border-b pb-4">
+                <Button
+                  onClick={() => selectedPayment && handleDownloadPDF(selectedPayment)}
+                  disabled={isGeneratingPDF}
+                  className="gap-2"
+                >
+                  {isGeneratingPDF ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  تحميل PDF
+                </Button>
+                
+                <Button
+                  onClick={() => selectedPayment && handleSharePDF(selectedPayment)}
+                  disabled={isGeneratingPDF}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  مشاركة
+                </Button>
+                
+                <Button
+                  onClick={() => selectedPayment && handlePrintReceipt(selectedPayment)}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <PrinterIcon className="h-4 w-4" />
+                  طباعة
+                </Button>
+              </div>
+              
+              {/* عرض الفاتورة */}
+              <PaymentReceipt
+                payment={convertPaymentToPDF(selectedPayment)}
+                academyInfo={getAcademyInfo()}
+              />
+              
+              {/* نسخة بسيطة مخفية للـ PDF */}
+              <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
+                <SimplePDFReceipt
+                  payment={convertPaymentToPDF(selectedPayment)}
+                  academyInfo={getAcademyInfo()}
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

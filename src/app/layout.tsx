@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import '../styles/responsive-new.css'
-import Navigation from '@/components/navigation'
+import Navigation from '@/components/navigation-new'
 import Script from 'next/script'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: "أكاديمية بساط العلم - النظام المالي",
@@ -35,6 +36,7 @@ export default function RootLayout({
             {children}
           </div>
         </main>
+        <Toaster position="top-center" dir="rtl" />
         <Script id="sw-registration" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {

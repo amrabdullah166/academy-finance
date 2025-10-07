@@ -39,6 +39,11 @@ const navigationItems = [
     icon: CreditCard
   },
   {
+    name: 'تسجيل الحضور',
+    href: '/attendance',
+    icon: UserCheck
+  },
+  {
     name: 'الاشتراكات الشهرية',
     href: '/subscriptions',
     icon: Calendar

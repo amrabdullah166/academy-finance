@@ -1,0 +1,125 @@
+Date : 2025-10-07 22:14:49
+Directory : c:\Users\amrabdullah\Documents\بساط العلم\academy-finance
+Total : 72 files,  21050 codes, 522 comments, 1420 blanks, all 22992 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| TypeScript JSX     |         34 |      8,518 |        151 |        741 |      9,410 |
+| JSON               |          5 |      8,228 |          0 |          4 |      8,232 |
+| MS SQL             |          9 |      1,895 |        226 |        242 |      2,363 |
+| TypeScript         |          6 |      1,487 |         86 |        248 |      1,821 |
+| PostCSS            |          3 |        674 |         54 |        128 |        856 |
+| Markdown           |          6 |        130 |          0 |         46 |        176 |
+| JavaScript         |          3 |         66 |          5 |         10 |         81 |
+| JSON with Comments |          1 |         47 |          0 |          1 |         48 |
+| XML                |          5 |          5 |          0 |          0 |          5 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                             | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                |         72 |     21,050 |        522 |      1,420 |     22,992 |
+| . (Files)                                                                                        |         15 |      8,445 |          0 |         63 |      8,508 |
+| database                                                                                         |          9 |      1,895 |        226 |        242 |      2,363 |
+| public                                                                                           |          7 |         70 |          5 |          3 |         78 |
+| src                                                                                              |         41 |     10,640 |        291 |      1,112 |     12,043 |
+| src\app                                                                                          |         14 |      6,687 |        150 |        556 |      7,393 |
+| src\app (Files)                                                                                  |          4 |      1,103 |         55 |         91 |      1,249 |
+| src\app\courses                                                                                  |          1 |        636 |         12 |         64 |        712 |
+| src\app\employees                                                                                |          1 |        492 |          4 |         49 |        545 |
+| src\app\enrollments                                                                              |          1 |        336 |          6 |         22 |        364 |
+| src\app\expenses                                                                                 |          1 |        454 |          4 |         46 |        504 |
+| src\app\payments                                                                                 |          2 |      1,183 |         17 |         84 |      1,284 |
+| src\app\reports                                                                                  |          1 |        474 |         16 |         46 |        536 |
+| src\app\settings                                                                                 |          1 |        565 |          9 |         49 |        623 |
+| src\app\students                                                                                 |          1 |        887 |         19 |         70 |        976 |
+| src\app\subscriptions                                                                            |          1 |        557 |          8 |         35 |        600 |
+| src\components                                                                                   |         21 |      2,084 |         16 |        220 |      2,320 |
+| src\components (Files)                                                                           |          3 |        530 |         16 |         42 |        588 |
+| src\components\ui                                                                                |         18 |      1,554 |          0 |        178 |      1,732 |
+| src\lib                                                                                          |          3 |      1,397 |         84 |        232 |      1,713 |
+| src\styles                                                                                       |          2 |        421 |         39 |         93 |        553 |
+| src\types                                                                                        |          1 |         51 |          2 |         11 |         64 |
++--------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                                                         | language           | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\COPY_FEATURE.md                        | Markdown           |         34 |          0 |          7 |         41 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\NETLIFY_DEPLOY.md                      | Markdown           |         39 |          0 |         11 |         50 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\README.md                              | Markdown           |         23 |          0 |         14 |         37 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\URGENT_VERCEL_FIX.md                   | Markdown           |          0 |          0 |          1 |          1 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\VERCEL_ENV_SETUP.md                    | Markdown           |         34 |          0 |         12 |         46 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\VERCEL_STEP_BY_STEP.md                 | Markdown           |          0 |          0 |          1 |          1 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\components.json                        | JSON               |         22 |          0 |          1 |         23 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\add-copy-template-setting.sql | MS SQL             |          7 |          4 |          3 |         14 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\complete-features.sql         | MS SQL             |        280 |         39 |         39 |        358 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\fix-features.sql              | MS SQL             |        141 |         20 |         16 |        177 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\fix-student-deletion.sql      | MS SQL             |         56 |         17 |         17 |         90 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\invoice-settings.sql          | MS SQL             |         12 |          2 |          1 |         15 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\new-features-update.sql       | MS SQL             |        246 |         33 |         33 |        312 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\schema-update.sql             | MS SQL             |        543 |         42 |         65 |        650 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\schema.sql                    | MS SQL             |        570 |         55 |         58 |        683 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\system_settings_table.sql     | MS SQL             |         40 |         14 |         10 |         64 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\eslint.config.mjs                      | JavaScript         |         21 |          0 |          5 |         26 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\next.config.ts                         | TypeScript         |         10 |          0 |          3 |         13 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\package-lock.json                      | JSON               |      8,096 |          0 |          1 |      8,097 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\package.json                           | JSON               |         56 |          0 |          1 |         57 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\postcss.config.mjs                     | JavaScript         |          4 |          0 |          2 |          6 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\file.svg                        | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\globe.svg                       | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\manifest.json                   | JSON               |         24 |          0 |          0 |         24 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\next.svg                        | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\sw.js                           | JavaScript         |         41 |          5 |          3 |         49 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\vercel.svg                      | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\window.svg                      | XML                |          1 |          0 |          0 |          1 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\courses\page.tsx               | TypeScript JSX     |        636 |         12 |         64 |        712 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\employees\page.tsx             | TypeScript JSX     |        492 |          4 |         49 |        545 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\enrollments\page.tsx           | TypeScript JSX     |        336 |          6 |         22 |        364 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\expenses\page.tsx              | TypeScript JSX     |        454 |          4 |         46 |        504 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\globals.css                    | PostCSS            |        253 |         15 |         35 |        303 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\layout.tsx                     | TypeScript JSX     |         54 |          0 |          3 |         57 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\page-dashboard.tsx             | TypeScript JSX     |        405 |         13 |         27 |        445 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\page.tsx                       | TypeScript JSX     |        391 |         27 |         26 |        444 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\payments\page-old.tsx          | TypeScript JSX     |        501 |          4 |         29 |        534 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\payments\page.tsx              | TypeScript JSX     |        682 |         13 |         55 |        750 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\reports\page.tsx               | TypeScript JSX     |        474 |         16 |         46 |        536 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\settings\page.tsx              | TypeScript JSX     |        565 |          9 |         49 |        623 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\students\page.tsx              | TypeScript JSX     |        887 |         19 |         70 |        976 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\subscriptions\page.tsx         | TypeScript JSX     |        557 |          8 |         35 |        600 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\PaymentReceipt.tsx      | TypeScript JSX     |        157 |          6 |         12 |        175 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\navigation-new.tsx      | TypeScript JSX     |        181 |          5 |         15 |        201 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\navigation.tsx          | TypeScript JSX     |        192 |          5 |         15 |        212 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\avatar.tsx           | TypeScript JSX     |         47 |          0 |          7 |         54 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\badge.tsx            | TypeScript JSX     |         41 |          0 |          6 |         47 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\button.tsx           | TypeScript JSX     |         54 |          0 |          6 |         60 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\calendar.tsx         | TypeScript JSX     |        203 |          0 |         11 |        214 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\card.tsx             | TypeScript JSX     |         83 |          0 |         10 |         93 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\checkbox.tsx         | TypeScript JSX     |         28 |          0 |          5 |         33 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\dialog.tsx           | TypeScript JSX     |        130 |          0 |         14 |        144 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\dropdown-menu.tsx    | TypeScript JSX     |        239 |          0 |         19 |        258 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\form.tsx             | TypeScript JSX     |        143 |          0 |         25 |        168 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\input.tsx            | TypeScript JSX     |         18 |          0 |          4 |         22 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\label.tsx            | TypeScript JSX     |         20 |          0 |          5 |         25 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\popover.tsx          | TypeScript JSX     |         41 |          0 |          8 |         49 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\select.tsx           | TypeScript JSX     |        172 |          0 |         14 |        186 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\separator.tsx        | TypeScript JSX     |         24 |          0 |          5 |         29 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\sheet.tsx            | TypeScript JSX     |        126 |          0 |         14 |        140 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\sonner.tsx           | TypeScript JSX     |         21 |          0 |          5 |         26 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\table.tsx            | TypeScript JSX     |        105 |          0 |         12 |        117 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\tabs.tsx             | TypeScript JSX     |         59 |          0 |          8 |         67 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\lib\pdfUtils.ts                    | TypeScript         |        148 |         19 |         34 |        201 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\lib\supabase.ts                    | TypeScript         |      1,244 |         65 |        196 |      1,505 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\lib\utils.ts                       | TypeScript         |          5 |          0 |          2 |          7 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\styles\responsive-new.css          | PostCSS            |        205 |         20 |         47 |        272 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\styles\responsive.css              | PostCSS            |        216 |         19 |         46 |        281 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\types\index.ts                     | TypeScript         |         51 |          2 |         11 |         64 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\tailwind.config.ts                     | TypeScript         |         29 |          0 |          2 |         31 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\tsconfig.json                          | JSON with Comments |         47 |          0 |          1 |         48 |
+| c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\vercel.json                            | JSON               |         30 |          0 |          1 |         31 |
+| Total                                                                                            |                    |     21,050 |        522 |      1,420 |     22,992 |
++--------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+

@@ -54,6 +54,8 @@ const getMockData = (type: string) => {
       return []
     case 'activities':
       return []
+    case 'attendance':
+      return []
     case 'stats':
       return {
         totalStudents: 0,
@@ -64,7 +66,11 @@ const getMockData = (type: string) => {
         monthlyExpenses: 0,
         netProfit: 0,
         pendingPayments: 0,
-        overdueSubscriptions: 0
+        overdueSubscriptions: 0,
+        totalRecords: 0,
+        presentRecords: 0,
+        absentRecords: 0,
+        attendanceRate: 0
       }
     default:
       return []
@@ -1501,4 +1507,204 @@ export const markReminderAsProcessed = async (reminderId: string) => {
   
   if (error) throw error
   return data
+}
+
+// ===== ATTENDANCE INTERFACES =====
+export interface Attendance {
+  id: string
+  student_id: string
+  course_id: string
+  attendance_date: string
+  attendance_time: string
+  is_present: boolean
+  notes?: string
+  created_at: string
+  updated_at: string
+  students?: {
+    id: string
+    name: string
+    email?: string
+  }
+  courses?: {
+    id: string
+    name: string
+  }
+}
+
+export interface AttendanceRecord {
+  student_id: string
+  course_id: string
+  attendance_date: string
+  is_present: boolean
+  notes?: string
+}
+
+// ===== ATTENDANCE FUNCTIONS =====
+
+// دالة لجلب جميع سجلات الحضور
+export const getAttendance = async (date?: string, courseId?: string): Promise<Attendance[]> => {
+  return await safeSupabaseOperation(async () => {
+    let query = supabase
+      .from('attendance')
+      .select(`
+        *,
+        students:student_id (
+          id,
+          name,
+          email
+        ),
+        courses:course_id (
+          id,
+          name
+        )
+      `)
+      .order('attendance_date', { ascending: false })
+      .order('attendance_time', { ascending: false })
+    
+    if (date) {
+      query = query.eq('attendance_date', date)
+    }
+    
+    if (courseId) {
+      query = query.eq('course_id', courseId)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    return data || []
+  }, 'attendance')
+}
+
+// دالة لتسجيل الحضور
+export const recordAttendance = async (attendanceRecords: AttendanceRecord[]): Promise<Attendance[]> => {
+  return await safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('attendance')
+      .upsert(
+        attendanceRecords.map(record => ({
+          ...record,
+          attendance_time: new Date().toTimeString().split(' ')[0],
+        })),
+        {
+          onConflict: 'student_id,course_id,attendance_date',
+          ignoreDuplicates: false
+        }
+      )
+      .select(`
+        *,
+        students:student_id (
+          id,
+          name,
+          email
+        ),
+        courses:course_id (
+          id,
+          name
+        )
+      `)
+    
+    if (error) throw error
+    return data || []
+  }, 'attendance')
+}
+
+// دالة لجلب الحضور لطالب معين
+export const getStudentAttendance = async (studentId: string, startDate?: string, endDate?: string): Promise<Attendance[]> => {
+  return await safeSupabaseOperation(async () => {
+    let query = supabase
+      .from('attendance')
+      .select(`
+        *,
+        courses:course_id (
+          id,
+          name
+        )
+      `)
+      .eq('student_id', studentId)
+      .order('attendance_date', { ascending: false })
+    
+    if (startDate) {
+      query = query.gte('attendance_date', startDate)
+    }
+    
+    if (endDate) {
+      query = query.lte('attendance_date', endDate)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    return data || []
+  }, 'attendance')
+}
+
+// دالة لجلب الحضور لكورس معين في تاريخ معين
+export const getCourseAttendance = async (courseId: string, date: string): Promise<Attendance[]> => {
+  return await safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('attendance')
+      .select(`
+        *,
+        students:student_id (
+          id,
+          name,
+          email
+        )
+      `)
+      .eq('course_id', courseId)
+      .eq('attendance_date', date)
+      .order('students.name', { ascending: true })
+    
+    if (error) throw error
+    return data || []
+  }, 'attendance')
+}
+
+// دالة لحذف سجل حضور
+export const deleteAttendance = async (id: string): Promise<void> => {
+  return await safeSupabaseOperation(async () => {
+    const { error } = await supabase
+      .from('attendance')
+      .delete()
+      .eq('id', id)
+    
+    if (error) throw error
+  })
+}
+
+// دالة لجلب إحصائيات الحضور
+export const getAttendanceStats = async (courseId?: string, startDate?: string, endDate?: string) => {
+  return await safeSupabaseOperation(async () => {
+    let query = supabase
+      .from('attendance')
+      .select('is_present, student_id')
+    
+    if (courseId) {
+      query = query.eq('course_id', courseId)
+    }
+    
+    if (startDate) {
+      query = query.gte('attendance_date', startDate)
+    }
+    
+    if (endDate) {
+      query = query.lte('attendance_date', endDate)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    
+    const totalRecords = data?.length || 0
+    const presentRecords = data?.filter(record => record.is_present).length || 0
+    const attendanceRate = totalRecords > 0 ? (presentRecords / totalRecords) * 100 : 0
+    
+    return {
+      totalRecords,
+      presentRecords,
+      absentRecords: totalRecords - presentRecords,
+      attendanceRate: Math.round(attendanceRate * 100) / 100
+    }
+  }, 'stats')
 }

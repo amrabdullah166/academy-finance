@@ -1,0 +1,74 @@
+"filename", "language", "Markdown", "JSON", "JSON with Comments", "TypeScript", "JavaScript", "MS SQL", "PostCSS", "XML", "TypeScript JSX", "comment", "blank", "total"
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\COPY_FEATURE.md", "Markdown", 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 41
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\NETLIFY_DEPLOY.md", "Markdown", 39, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 50
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\README.md", "Markdown", 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 37
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\URGENT_VERCEL_FIX.md", "Markdown", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\VERCEL_ENV_SETUP.md", "Markdown", 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 46
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\VERCEL_STEP_BY_STEP.md", "Markdown", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\components.json", "JSON", 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 1, 23
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\add-copy-template-setting.sql", "MS SQL", 0, 0, 0, 0, 0, 7, 0, 0, 0, 4, 3, 14
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\complete-features.sql", "MS SQL", 0, 0, 0, 0, 0, 280, 0, 0, 0, 39, 39, 358
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\fix-features.sql", "MS SQL", 0, 0, 0, 0, 0, 141, 0, 0, 0, 20, 16, 177
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\fix-student-deletion.sql", "MS SQL", 0, 0, 0, 0, 0, 56, 0, 0, 0, 17, 17, 90
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\invoice-settings.sql", "MS SQL", 0, 0, 0, 0, 0, 12, 0, 0, 0, 2, 1, 15
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\new-features-update.sql", "MS SQL", 0, 0, 0, 0, 0, 246, 0, 0, 0, 33, 33, 312
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\schema-update.sql", "MS SQL", 0, 0, 0, 0, 0, 543, 0, 0, 0, 42, 65, 650
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\schema.sql", "MS SQL", 0, 0, 0, 0, 0, 570, 0, 0, 0, 55, 58, 683
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\database\system_settings_table.sql", "MS SQL", 0, 0, 0, 0, 0, 40, 0, 0, 0, 14, 10, 64
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\eslint.config.mjs", "JavaScript", 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 5, 26
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\next.config.ts", "TypeScript", 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 3, 13
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\package-lock.json", "JSON", 0, 8096, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8097
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\package.json", "JSON", 0, 56, 0, 0, 0, 0, 0, 0, 0, 0, 1, 57
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\postcss.config.mjs", "JavaScript", 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 2, 6
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\file.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\globe.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\manifest.json", "JSON", 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\next.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\sw.js", "JavaScript", 0, 0, 0, 0, 41, 0, 0, 0, 0, 5, 3, 49
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\vercel.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\public\window.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\courses\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 636, 12, 64, 712
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\employees\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 492, 4, 49, 545
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\enrollments\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 336, 6, 22, 364
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\expenses\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 454, 4, 46, 504
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\globals.css", "PostCSS", 0, 0, 0, 0, 0, 0, 253, 0, 0, 15, 35, 303
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 54, 0, 3, 57
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\page-dashboard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 405, 13, 27, 445
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 391, 27, 26, 444
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\payments\page-old.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 501, 4, 29, 534
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\payments\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 682, 13, 55, 750
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\reports\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 474, 16, 46, 536
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\settings\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 565, 9, 49, 623
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\students\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 887, 19, 70, 976
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\app\subscriptions\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 557, 8, 35, 600
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\PaymentReceipt.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 157, 6, 12, 175
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\navigation-new.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 181, 5, 15, 201
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\navigation.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 192, 5, 15, 212
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\avatar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 47, 0, 7, 54
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\badge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 41, 0, 6, 47
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 54, 0, 6, 60
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\calendar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 203, 0, 11, 214
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 83, 0, 10, 93
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\checkbox.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 28, 0, 5, 33
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 130, 0, 14, 144
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\dropdown-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 239, 0, 19, 258
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\form.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 143, 0, 25, 168
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\input.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 4, 22
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\label.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 5, 25
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\popover.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 41, 0, 8, 49
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\select.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 172, 0, 14, 186
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\separator.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 24, 0, 5, 29
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\sheet.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 126, 0, 14, 140
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\sonner.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 5, 26
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\table.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 105, 0, 12, 117
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\components\ui\tabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 59, 0, 8, 67
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\lib\pdfUtils.ts", "TypeScript", 0, 0, 0, 148, 0, 0, 0, 0, 0, 19, 34, 201
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\lib\supabase.ts", "TypeScript", 0, 0, 0, 1244, 0, 0, 0, 0, 0, 65, 196, 1505
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\lib\utils.ts", "TypeScript", 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 2, 7
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\styles\responsive-new.css", "PostCSS", 0, 0, 0, 0, 0, 0, 205, 0, 0, 20, 47, 272
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\styles\responsive.css", "PostCSS", 0, 0, 0, 0, 0, 0, 216, 0, 0, 19, 46, 281
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\src\types\index.ts", "TypeScript", 0, 0, 0, 51, 0, 0, 0, 0, 0, 2, 11, 64
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\tailwind.config.ts", "TypeScript", 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 2, 31
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\tsconfig.json", "JSON with Comments", 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 1, 48
+"c:\Users\amrabdullah\Documents\بساط العلم\academy-finance\vercel.json", "JSON", 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 1, 31
+"Total", "-", 130, 8228, 47, 1487, 66, 1895, 674, 5, 8518, 522, 1420, 22992
