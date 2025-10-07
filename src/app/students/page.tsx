@@ -181,7 +181,7 @@ export default function StudentsPage() {
       await fetchStudents()
       
       // رسالة تفصيلية عما تم حذفه
-      const message = `تم حذف الطالب "${studentToDelete.name}" بنجاح!\n\nتفاصيل ما تم حذفه:\n• ${result.deletedPayments} مدفوعة\n• ${result.deletedEnrollments} تسجيل في كورس\n• ${result.deletedReminders} تذكير`
+      const message = `تم حذف الطالب "${studentToDelete.name}" بنجاح!\n\nتفاصيل ما تم حذفه:\n• ${result.deletedSubscriptions || 0} اشتراك شهري\n• ${result.deletedPayments} مدفوعة\n• ${result.deletedEnrollments} تسجيل في كورس\n• ${result.deletedReminders} تذكير`
       alert(message)
     } catch (error) {
       console.error('خطأ في حذف الطالب:', error)

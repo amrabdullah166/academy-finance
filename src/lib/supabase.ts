@@ -279,6 +279,7 @@ export const deleteStudent = async (studentId: string) => {
     let deletedReminders = 0
     let deletedPayments = 0
     let deletedEnrollments = 0
+    let deletedSubscriptions = 0
 
     // 1. محاولة حذف تفاصيل التذكيرات المرتبطة بالطالب
     try {
@@ -298,7 +299,38 @@ export const deleteStudent = async (studentId: string) => {
       console.warn('جدول التذكيرات غير موجود أو خطأ في الوصول إليه:', reminderError)
     }
 
-    // 2. حذف المدفوعات المرتبطة بالطالب
+    // 2. حذف الاشتراكات الشهرية المرتبطة بالطالب أولاً (مع إزالة مراجع المدفوعات)
+    try {
+      console.log(`محاولة حذف الاشتراكات الشهرية للطالب: ${studentId}`)
+      
+      // أولاً: إزالة مراجع المدفوعات من الاشتراكات الشهرية
+      const { error: updateError } = await supabase
+        .from('monthly_subscriptions')
+        .update({ payment_id: null })
+        .eq('student_id', studentId)
+      
+      if (updateError) {
+        console.warn('خطأ في إزالة مراجع المدفوعات من الاشتراكات:', updateError)
+      }
+      
+      // ثانياً: حذف الاشتراكات الشهرية
+      const { data: deletedSubscriptionsData, error: subscriptionsError } = await supabase
+        .from('monthly_subscriptions')
+        .delete()
+        .eq('student_id', studentId)
+        .select('id')
+      
+      if (subscriptionsError) {
+        console.warn('خطأ في حذف الاشتراكات الشهرية:', subscriptionsError)
+      } else {
+        deletedSubscriptions = deletedSubscriptionsData?.length || 0
+        console.log(`تم حذف ${deletedSubscriptions} اشتراك شهري`)
+      }
+    } catch (subscriptionError) {
+      console.warn('جدول الاشتراكات الشهرية غير موجود أو خطأ في الوصول إليه:', subscriptionError)
+    }
+
+    // 3. حذف المدفوعات المرتبطة بالطالب
     console.log(`محاولة حذف المدفوعات للطالب: ${studentId}`)
     const { data: deletedPaymentsData, error: paymentsError } = await supabase
       .from('payments')
@@ -314,7 +346,24 @@ export const deleteStudent = async (studentId: string) => {
       console.log(`تم حذف ${deletedPayments} دفعة فعلياً`)
     }
 
-    // 3. حذف تسجيل الطالب في الكورسات
+    // 4. حذف سجلات الحضور المرتبطة بالطالب
+    try {
+      console.log(`محاولة حذف سجلات الحضور للطالب: ${studentId}`)
+      const { error: attendanceError } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('student_id', studentId)
+      
+      if (attendanceError) {
+        console.warn('خطأ في حذف سجلات الحضور:', attendanceError)
+      } else {
+        console.log('تم حذف سجلات الحضور بنجاح')
+      }
+    } catch (attendanceError) {
+      console.warn('جدول الحضور غير موجود أو خطأ في الوصول إليه:', attendanceError)
+    }
+
+    // 5. حذف تسجيل الطالب في الكورسات
     console.log(`محاولة حذف التسجيلات للطالب: ${studentId}`)
     const { data: deletedEnrollmentsData, error: enrollmentError } = await supabase
       .from('student_courses')
@@ -330,7 +379,7 @@ export const deleteStudent = async (studentId: string) => {
       console.log(`تم حذف ${deletedEnrollments} تسجيل في كورس فعلياً`)
     }
 
-    // 4. الآن حذف الطالب نفسه
+    // 6. الآن حذف الطالب نفسه
     console.log(`محاولة حذف الطالب من قاعدة البيانات: ${studentId}`)
     const { data: deletedStudent, error: studentError } = await supabase
       .from('students')
@@ -353,7 +402,8 @@ export const deleteStudent = async (studentId: string) => {
       success: true,
       deletedPayments,
       deletedEnrollments,
-      deletedReminders
+      deletedReminders,
+      deletedSubscriptions
     }
 
   } catch (error) {
