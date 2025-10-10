@@ -15,8 +15,7 @@ import {
   recordAttendance, 
   getCourseAttendance,
   Student, 
-  Course, 
-  Attendance,
+  Course,
   AttendanceRecord 
 } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -46,7 +45,8 @@ export default function AttendancePage() {
     if (selectedCourse) {
       loadCourseStudents()
     }
-  }, [selectedCourse, attendanceDate])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCourse, attendanceDate, students])
 
   const loadInitialData = async () => {
     setLoading(true)
@@ -74,7 +74,7 @@ export default function AttendancePage() {
       const existingAttendance = await getCourseAttendance(selectedCourse, attendanceDate)
       
       // جلب طلاب الكورس من جدول التسجيلات
-      const enrolledStudents = students.filter(student => 
+      const enrolledStudents = students.filter(() => 
         // هنا يجب أن نربط الطلاب بالكورسات حسب جدول enrollments
         // لكن للآن سنعرض جميع الطلاب
         true

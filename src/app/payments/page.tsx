@@ -31,7 +31,7 @@ import Link from 'next/link'
 import { getPayments, createPayment, getStudents, getCourses, Payment, Student, Course, getSystemSettings, SystemSetting } from '@/lib/supabase'
 import { PaymentReceipt } from '@/components/PaymentReceipt'
 import { SimplePDFReceipt } from '@/components/SimplePDFReceipt'
-import { generatePaymentReceiptPDF, sharePaymentReceiptPDF, printPaymentReceipt, PDFPayment, AcademyInfo } from '@/lib/pdfUtils'
+import { sharePaymentReceiptPDF, printPaymentReceipt, PDFPayment, AcademyInfo } from '@/lib/pdfUtils'
 import { generateCanvasPDF } from '@/lib/canvasPDF'
 
 interface PaymentWithDetails extends Payment {

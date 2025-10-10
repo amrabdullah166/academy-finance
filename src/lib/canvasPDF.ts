@@ -208,37 +208,4 @@ export const generateCanvasPDF = async (
   }
 }
 
-// دالة لطباعة الإيصال
-export const printCanvasPDF = async (
-  payment: CanvasPDFPayment,
-  academy: CanvasPDFAcademy
-): Promise<void> => {
-  try {
-    // نفس منطق الرسم
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    
-    if (!ctx) return
-
-    // ... نفس كود الرسم أعلاه ...
-    
-    // فتح نافذة طباعة جديدة
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head><title>إيصال دفع</title></head>
-          <body style="margin:0; padding:20px;">
-            <img src="${canvas.toDataURL()}" style="width:100%; height:auto;" />
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
-      printWindow.focus()
-      printWindow.print()
-    }
-
-  } catch (error) {
-    console.error('خطأ في الطباعة:', error)
-  }
-}
+// دالة الطباعة محذوفة لعدم الاستخدام الكامل

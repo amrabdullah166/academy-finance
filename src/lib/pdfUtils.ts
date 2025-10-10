@@ -23,7 +23,7 @@ export interface AcademyInfo {
 
 export const generatePaymentReceiptPDF = async (
   payment: PDFPayment,
-  academyInfo: AcademyInfo
+  _academyInfo?: AcademyInfo
 ): Promise<void> => {
   try {
     // البحث عن عنصر الإيصال
@@ -93,7 +93,7 @@ export const sharePaymentReceiptPDF = async (
 
     // إنشاء ملف
     const studentName = payment.students?.name || 'غير محدد'
-    const receiptNumber = payment.receipt_number || payment.id.slice(0, 8)
+    // const receiptNumber = payment.receipt_number || payment.id.slice(0, 8) // unused for now
     const fileName = `إيصال_دفع_${studentName}.png`
     
     const file = new File([blob], fileName, { type: 'image/png' })
