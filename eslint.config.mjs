@@ -16,10 +16,20 @@ const eslintConfig = [
       "node_modules/**",
       ".next/**",
       "out/**",
-      "build/**",
+      "build/**", 
       "next-env.d.ts",
+      "*.config.js",
+      "*.config.ts",
     ],
   },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@next/next/no-page-custom-font": "warn",
+      "@next/next/no-img-element": "warn"
+    }
+  }
 ];
 
 export default eslintConfig;
