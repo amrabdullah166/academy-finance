@@ -31,7 +31,7 @@ import Link from 'next/link'
 import { getPayments, createPayment, getStudents, getCourses, Payment, Student, Course, getSystemSettings, SystemSetting } from '@/lib/supabase'
 import { PaymentReceipt } from '@/components/PaymentReceipt'
 import { SimplePDFReceipt } from '@/components/SimplePDFReceipt'
-import { sharePaymentReceiptPDF, printPaymentReceipt, PDFPayment, AcademyInfo } from '@/lib/pdfUtils'
+import { printPaymentReceipt, PDFPayment, AcademyInfo } from '@/lib/pdfUtils'
 import { generateCanvasPDF } from '@/lib/canvasPDF'
 
 interface PaymentWithDetails extends Payment {
@@ -180,7 +180,7 @@ export default function PaymentsPage() {
             const pdfPayment = convertPaymentToPDF(payment)
             const academyInfo = getAcademyInfo()
             
-            await sharePaymentReceiptPDF(pdfPayment, academyInfo)
+            await generateCanvasPDF(pdfPayment, academyInfo)
             setShowReceiptDialog(false)
           } catch (error) {
             console.error('خطأ في مشاركة PDF:', error)
@@ -195,7 +195,7 @@ export default function PaymentsPage() {
           const pdfPayment = convertPaymentToPDF(payment)
           const academyInfo = getAcademyInfo()
           
-          await sharePaymentReceiptPDF(pdfPayment, academyInfo)
+          await generateCanvasPDF(pdfPayment, academyInfo)
         } catch (error) {
           console.error('خطأ في مشاركة PDF:', error)
           alert('فشل في مشاركة الإيصال. يرجى المحاولة مرة أخرى.')

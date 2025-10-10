@@ -74,7 +74,7 @@ export default function AttendancePage() {
       const existingAttendance = await getCourseAttendance(selectedCourse, attendanceDate)
       
       // جلب طلاب الكورس من جدول التسجيلات
-      const enrolledStudents = students.filter(() => 
+      const enrolledStudents = students.filter((_student) => 
         // هنا يجب أن نربط الطلاب بالكورسات حسب جدول enrollments
         // لكن للآن سنعرض جميع الطلاب
         true
