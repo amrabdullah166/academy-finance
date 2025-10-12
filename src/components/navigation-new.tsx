@@ -44,6 +44,11 @@ const navigationItems = [
     icon: UserCheck
   },
   {
+    name: 'تتبع الحضور',
+    href: '/attendance-tracking',
+    icon: BarChart3
+  },
+  {
     name: 'الاشتراكات الشهرية',
     href: '/subscriptions',
     icon: Calendar

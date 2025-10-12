@@ -1708,3 +1708,103 @@ export const getAttendanceStats = async (courseId?: string, startDate?: string, 
     }
   }, 'stats')
 }
+
+// جلب سجلات الحضور مع تفاصيل الطلاب والكورسات
+export const getAttendanceRecordsWithDetails = async (filters?: {
+  courseId?: string
+  studentId?: string
+  startDate?: string
+  endDate?: string
+  limit?: number
+}) => {
+  return safeSupabaseOperation(async () => {
+    let query = supabase
+      .from('attendance')
+      .select(`
+        id,
+        student_id,
+        course_id,
+        attendance_date,
+        is_present,
+        notes,
+        students:student_id (
+          id,
+          name,
+          email
+        ),
+        courses:course_id (
+          id,
+          name
+        )
+      `)
+      .order('attendance_date', { ascending: false })
+
+    if (filters?.courseId) {
+      query = query.eq('course_id', filters.courseId)
+    }
+
+    if (filters?.studentId) {
+      query = query.eq('student_id', filters.studentId)
+    }
+
+    if (filters?.startDate) {
+      query = query.gte('attendance_date', filters.startDate)
+    }
+
+    if (filters?.endDate) {
+      query = query.lte('attendance_date', filters.endDate)
+    }
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return data || []
+  }, 'attendance-records')
+}
+
+// حساب إحصائيات الحضور لطالب معين
+export const getStudentAttendanceStats = async (studentId: string, filters?: {
+  courseId?: string
+  startDate?: string
+  endDate?: string
+}) => {
+  return safeSupabaseOperation(async () => {
+    let query = supabase
+      .from('attendance')
+      .select('is_present')
+      .eq('student_id', studentId)
+
+    if (filters?.courseId) {
+      query = query.eq('course_id', filters.courseId)
+    }
+
+    if (filters?.startDate) {
+      query = query.gte('attendance_date', filters.startDate)
+    }
+
+    if (filters?.endDate) {
+      query = query.lte('attendance_date', filters.endDate)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    const totalDays = data?.length || 0
+    const presentDays = data?.filter(record => record.is_present).length || 0
+    const absentDays = totalDays - presentDays
+    const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 0
+
+    return {
+      totalDays,
+      presentDays,
+      absentDays,
+      attendanceRate: Math.round(attendanceRate * 100) / 100
+    }
+  }, 'student-stats')
+}
