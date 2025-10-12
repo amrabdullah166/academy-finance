@@ -75,20 +75,28 @@ export default function Dashboard() {
   const [notifications, setNotifications] = useState<NotificationType[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true)
       
-      const [
-        dashboardStats,
-        notifs,
-        activities
-      ] = await Promise.all([
+      // إضافة timeout للتأكد من أن loading لن يستمر إلى الأبد
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('انتهت مهلة الاتصال')), 5000)
+      )
+      
+      const dataPromise = Promise.all([
         getEnhancedDashboardStats(),
         getNotifications(undefined, false),
         getRecentActivities(8)
       ])
+
+      const [
+        dashboardStats,
+        notifs,
+        activities
+      ] = await Promise.race([dataPromise, timeoutPromise]) as any
 
       setStats(dashboardStats)
       // setRecentPayments(payments || [])
@@ -98,6 +106,22 @@ export default function Dashboard() {
 
     } catch (error) {
       console.error('خطأ في تحميل بيانات لوحة التحكم:', error)
+      setError('فشل في الاتصال بقاعدة البيانات. يرجى التحقق من الاتصال بالإنترنت.')
+      
+      // في حالة الخطأ، اظهر البيانات الافتراضية
+      setStats({
+        totalStudents: 0,
+        activeStudents: 0,
+        totalCourses: 0,
+        activeCourses: 0,
+        monthlyRevenue: 0,
+        monthlyExpenses: 0,
+        netProfit: 0,
+        pendingPayments: 0,
+        overdueSubscriptions: 0
+      })
+      setNotifications([])
+      setRecentActivities([])
     } finally {
       setLoading(false)
     }
@@ -137,15 +161,47 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="mr-2">جاري التحميل...</span>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md mx-auto">
+          <div className="mb-4">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">مرحباً بك في أكاديمية بساط العلم</h2>
+          <p className="text-gray-600 mb-4">جاري تحميل البيانات من قاعدة البيانات...</p>
+          <div className="text-sm text-gray-500">
+            إذا استمر التحميل طويلاً، تحقق من اتصال الإنترنت
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="w-full max-w-none">
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-red-600 ml-2" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">تحذير</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => {
+                  setError(null)
+                  fetchDashboardData()
+                }}
+              >
+                إعادة المحاولة
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
