@@ -836,19 +836,39 @@ export const getStudentCourses = async () => {
   }, 'enrollments')
 }
 
-export const enrollStudentInCourse = async (studentId: string, courseId: string) => {
+export const enrollStudentInCourse = async (
+  studentId: string, 
+  courseId: string, 
+  hasTransportation: boolean = false
+) => {
+  // Get course details to calculate fees
+  const { data: course, error: courseError } = await supabase
+    .from('courses')
+    .select('monthly_fee, registration_fee, transportation_fee')
+    .eq('id', courseId)
+    .single()
+  
+  if (courseError) throw courseError
+  
+  const monthlyFee = course.monthly_fee + (hasTransportation ? (course.transportation_fee || 0) : 0)
+  const registrationFee = course.registration_fee || 0
+  
   const { data, error } = await supabase
     .from('student_courses')
     .insert([{
       student_id: studentId,
       course_id: courseId,
       enrollment_date: new Date().toISOString().split('T')[0],
-      status: 'enrolled'
+      status: 'enrolled',
+      has_transportation: hasTransportation,
+      monthly_fee: monthlyFee,
+      registration_fee: registrationFee,
+      registration_fee_paid: false
     }])
     .select(`
       *,
       students (name),
-      courses (name, monthly_fee)
+      courses (name, monthly_fee, registration_fee, transportation_fee)
     `)
     .single()
   
@@ -1808,3 +1828,270 @@ export const getStudentAttendanceStats = async (studentId: string, filters?: {
     }
   }, 'student-stats')
 }
+
+// ==================== Monthly Payments Functions ====================
+
+/**
+ * Get all monthly payments with student and course details
+ */
+export const getMonthlyPayments = async (filters?: {
+  status?: 'paid' | 'unpaid' | 'overdue'
+  month?: number
+  year?: number
+  courseId?: string
+  studentId?: string
+}) => {
+  return safeSupabaseOperation(async () => {
+    let query = supabase
+      .from('monthly_payments')
+      .select(`
+        *,
+        enrollment:student_courses!enrollment_id (
+          id,
+          student:students (id, name, phone),
+          course:courses (id, name, monthly_fee)
+        )
+      `)
+      .order('year', { ascending: false })
+      .order('month', { ascending: false })
+
+    if (filters?.status) {
+      query = query.eq('status', filters.status)
+    }
+
+    if (filters?.month) {
+      query = query.eq('month', filters.month)
+    }
+
+    if (filters?.year) {
+      query = query.eq('year', filters.year)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    // Filter by course or student if needed (since they're nested)
+    let filteredData = data || []
+    
+    if (filters?.courseId) {
+      filteredData = filteredData.filter(
+        payment => payment.enrollment?.course?.id === filters.courseId
+      )
+    }
+
+    if (filters?.studentId) {
+      filteredData = filteredData.filter(
+        payment => payment.enrollment?.student?.id === filters.studentId
+      )
+    }
+
+    return filteredData
+  }, 'monthly-payments')
+}
+
+/**
+ * Get monthly payments summary statistics
+ */
+export const getMonthlyPaymentsSummary = async (month?: number, year?: number) => {
+  return safeSupabaseOperation(async () => {
+    const currentMonth = month || new Date().getMonth() + 1
+    const currentYear = year || new Date().getFullYear()
+
+    const { data, error } = await supabase
+      .from('monthly_payments')
+      .select('status, amount')
+      .eq('month', currentMonth)
+      .eq('year', currentYear)
+
+    if (error) throw error
+
+    const payments = data || []
+    const totalPayments = payments.length
+    const paidPayments = payments.filter(p => p.status === 'paid')
+    const unpaidPayments = payments.filter(p => p.status === 'unpaid')
+    const overduePayments = payments.filter(p => p.status === 'overdue')
+
+    const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0)
+    const paidAmount = paidPayments.reduce((sum, p) => sum + p.amount, 0)
+    const unpaidAmount = unpaidPayments.reduce((sum, p) => sum + p.amount, 0)
+    const overdueAmount = overduePayments.reduce((sum, p) => sum + p.amount, 0)
+
+    return {
+      month: currentMonth,
+      year: currentYear,
+      totalPayments,
+      paidCount: paidPayments.length,
+      unpaidCount: unpaidPayments.length,
+      overdueCount: overduePayments.length,
+      totalAmount,
+      paidAmount,
+      unpaidAmount,
+      overdueAmount,
+      collectionRate: totalPayments > 0 ? (paidPayments.length / totalPayments) * 100 : 0
+    }
+  }, 'payment-summary')
+}
+
+/**
+ * Mark monthly payment as paid
+ */
+export const markMonthlyPaymentAsPaid = async (paymentId: string) => {
+  const { data, error } = await supabase
+    .from('monthly_payments')
+    .update({ 
+      status: 'paid',
+      paid_date: new Date().toISOString()
+    })
+    .eq('id', paymentId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Get student's payment history
+ */
+export const getStudentPaymentHistory = async (studentId: string) => {
+  return safeSupabaseOperation(async () => {
+    const { data: enrollments, error: enrollError } = await supabase
+      .from('student_courses')
+      .select(`
+        id,
+        registration_fee,
+        registration_fee_paid,
+        monthly_fee,
+        has_transportation,
+        course:courses (name)
+      `)
+      .eq('student_id', studentId)
+
+    if (enrollError) throw enrollError
+
+    const enrollmentIds = enrollments?.map(e => e.id) || []
+
+    const { data: monthlyPayments, error: paymentsError } = await supabase
+      .from('monthly_payments')
+      .select('*')
+      .in('enrollment_id', enrollmentIds)
+      .order('year', { ascending: false })
+      .order('month', { ascending: false })
+
+    if (paymentsError) throw paymentsError
+
+    return {
+      enrollments: enrollments || [],
+      monthlyPayments: monthlyPayments || []
+    }
+  }, 'student-payment-history')
+}
+
+/**
+ * تسجيل دفع رسوم التسجيل
+ */
+export const markRegistrationFeePaid = async (enrollmentId: string) => {
+  const { data, error } = await supabase
+    .from('student_courses')
+    .update({ 
+      registration_fee_paid: true
+    })
+    .eq('id', enrollmentId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * الحصول على رسوم التسجيل غير المدفوعة
+ */
+export const getUnpaidRegistrationFees = async () => {
+  return safeSupabaseOperation(async () => {
+    const { data, error } = await supabase
+      .from('student_courses')
+      .select(`
+        id,
+        registration_fee,
+        registration_fee_paid,
+        enrollment_date,
+        student:students (
+          id,
+          name,
+          phone
+        ),
+        course:courses (
+          id,
+          name
+        )
+      `)
+      .eq('registration_fee_paid', false)
+      .gt('registration_fee', 0)
+      .eq('status', 'enrolled')
+      .order('enrollment_date', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  }, 'unpaid-registration-fees')
+}
+
+/**
+ * الحصول على ملخص المدفوعات المستحقة لطالب معين
+ */
+export const getStudentDuePayments = async (studentId: string) => {
+  return safeSupabaseOperation(async () => {
+    // 1. رسوم التسجيل غير المدفوعة
+    const { data: registrationFees, error: regError } = await supabase
+      .from('student_courses')
+      .select(`
+        id,
+        registration_fee,
+        course:courses (name)
+      `)
+      .eq('student_id', studentId)
+      .eq('registration_fee_paid', false)
+      .gt('registration_fee', 0)
+      .eq('status', 'enrolled')
+
+    if (regError) throw regError
+
+    // 2. المدفوعات الشهرية غير المدفوعة
+    const { data: monthlyPayments, error: monthlyError } = await supabase
+      .from('monthly_payments')
+      .select(`
+        id,
+        payment_month,
+        total_amount,
+        enrollment:student_courses!enrollment_id (
+          course:courses (name)
+        )
+      `)
+      .eq('student_id', studentId)
+      .eq('paid', false)
+      .lte('payment_month', new Date().toISOString())
+      .order('payment_month', { ascending: true })
+
+    if (monthlyError) throw monthlyError
+
+    const totalRegistrationDue = (registrationFees || []).reduce(
+      (sum, r) => sum + (r.registration_fee || 0), 
+      0
+    )
+    
+    const totalMonthlyDue = (monthlyPayments || []).reduce(
+      (sum, p) => sum + (p.total_amount || 0), 
+      0
+    )
+
+    return {
+      registrationFees: registrationFees || [],
+      monthlyPayments: monthlyPayments || [],
+      totalRegistrationDue,
+      totalMonthlyDue,
+      totalDue: totalRegistrationDue + totalMonthlyDue
+    }
+  }, 'student-due-payments')
+}
+

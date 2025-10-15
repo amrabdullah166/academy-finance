@@ -42,8 +42,8 @@ export default function AttendanceTrackingPage() {
   const [loading, setLoading] = useState(false)
   
   // Filters
-  const [selectedCourse, setSelectedCourse] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState('')
+  const [selectedCourse, setSelectedCourse] = useState('all')
+  const [selectedStudent, setSelectedStudent] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [statusFilter, setStatusFilter] = useState('all') // all, present, absent
@@ -94,8 +94,8 @@ export default function AttendanceTrackingPage() {
     try {
       // جلب سجلات الحضور من قاعدة البيانات مع الفلاتر الحالية
       const filters = {
-        courseId: selectedCourse || undefined,
-        studentId: selectedStudent || undefined,
+        courseId: selectedCourse && selectedCourse !== 'all' ? selectedCourse : undefined,
+        studentId: selectedStudent && selectedStudent !== 'all' ? selectedStudent : undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         limit: 1000 // حد أقصى للنتائج
@@ -141,10 +141,10 @@ export default function AttendanceTrackingPage() {
       if (end && recordDate > end) return false
       
       // تصفية حسب الكورس
-      if (selectedCourse && record.course_id !== selectedCourse) return false
+      if (selectedCourse && selectedCourse !== 'all' && record.course_id !== selectedCourse) return false
       
       // تصفية حسب الطالب
-      if (selectedStudent && record.student_id !== selectedStudent) return false
+      if (selectedStudent && selectedStudent !== 'all' && record.student_id !== selectedStudent) return false
       
       // تصفية حسب الحالة
       if (statusFilter === 'present' && !record.is_present) return false
@@ -272,14 +272,16 @@ export default function AttendanceTrackingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>الكورس</Label>
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <Select key={`course-${courses.length}`} value={selectedCourse} onValueChange={setSelectedCourse}>
                 <SelectTrigger>
                   <SelectValue placeholder="جميع الكورسات" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">جميع الكورسات</SelectItem>
-                  {courses.map((course) => (
-                    <SelectItem key={course.id} value={course.id}>
+                  <SelectItem value="all">جميع الكورسات</SelectItem>
+                  {courses
+                    .filter(course => course?.id && String(course.id).trim() !== '')
+                    .map((course) => (
+                    <SelectItem key={course.id} value={course.id!}>
                       {course.name}
                     </SelectItem>
                   ))}
@@ -289,14 +291,16 @@ export default function AttendanceTrackingPage() {
 
             <div className="space-y-2">
               <Label>الطالب</Label>
-              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+              <Select key={`student-${students.length}`} value={selectedStudent} onValueChange={setSelectedStudent}>
                 <SelectTrigger>
                   <SelectValue placeholder="جميع الطلاب" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">جميع الطلاب</SelectItem>
-                  {students.map((student) => (
-                    <SelectItem key={student.id} value={student.id}>
+                  <SelectItem value="all">جميع الطلاب</SelectItem>
+                  {students
+                    .filter(student => student?.id && String(student.id).trim() !== '')
+                    .map((student) => (
+                    <SelectItem key={student.id} value={student.id!}>
                       {student.name}
                     </SelectItem>
                   ))}

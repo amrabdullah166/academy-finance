@@ -356,8 +356,10 @@ export default function PaymentsPage() {
                         <SelectValue placeholder="اختر الطالب" />
                       </SelectTrigger>
                       <SelectContent>
-                        {students.map((student) => (
-                          <SelectItem key={student.id} value={student.id}>
+                        {students
+                          .filter(s => s?.id && String(s.id).trim() !== '')
+                          .map((student) => (
+                          <SelectItem key={student.id} value={student.id!}>
                             {student.name}
                           </SelectItem>
                         ))}
@@ -375,8 +377,10 @@ export default function PaymentsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">بدون دورة محددة</SelectItem>
-                        {courses.map((course) => (
-                          <SelectItem key={course.id} value={course.id}>
+                        {courses
+                          .filter(c => c?.id && String(c.id).trim() !== '')
+                          .map((course) => (
+                          <SelectItem key={course.id} value={course.id!}>
                             {course.name}
                           </SelectItem>
                         ))}

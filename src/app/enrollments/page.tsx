@@ -49,6 +49,7 @@ export default function EnrollmentsPage() {
   const [loading, setLoading] = useState(true)
   const [selectedStudent, setSelectedStudent] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
+  const [hasTransportation, setHasTransportation] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -85,10 +86,11 @@ export default function EnrollmentsPage() {
     }
 
     try {
-      await enrollStudentInCourse(selectedStudent, selectedCourse)
+      await enrollStudentInCourse(selectedStudent, selectedCourse, hasTransportation)
       setIsEnrollDialogOpen(false)
       setSelectedStudent('')
       setSelectedCourse('')
+      setHasTransportation(false)
       fetchData()
       alert('تم تسجيل الطالب في الدورة بنجاح')
     } catch (error) {
@@ -171,8 +173,10 @@ export default function EnrollmentsPage() {
                       <SelectValue placeholder="اختر طالب" />
                     </SelectTrigger>
                     <SelectContent>
-                      {students.map(student => (
-                        <SelectItem key={student.id} value={student.id}>
+                      {students
+                        .filter(s => s?.id && String(s.id).trim() !== '')
+                        .map(student => (
+                        <SelectItem key={student.id} value={student.id!}>
                           {student.name} - {student.phone}
                         </SelectItem>
                       ))}
@@ -187,14 +191,32 @@ export default function EnrollmentsPage() {
                       <SelectValue placeholder="اختر دورة" />
                     </SelectTrigger>
                     <SelectContent>
-                      {courses.map(course => (
-                        <SelectItem key={course.id} value={course.id}>
+                      {courses
+                        .filter(c => c?.id && String(c.id).trim() !== '')
+                        .map(course => (
+                        <SelectItem key={course.id} value={course.id!}>
                           {course.name} - {course.monthly_fee} دينار شهرياً
+                          {(course as any).transportation_fee > 0 && ` (مواصلات: ${(course as any).transportation_fee} د)`}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
+                {selectedCourse && courses.find(c => c.id === selectedCourse && (c as any).transportation_fee > 0) && (
+                  <div className="flex items-center space-x-2 space-x-reverse bg-slate-50 p-3 rounded-md">
+                    <input
+                      type="checkbox"
+                      id="transportation"
+                      checked={hasTransportation}
+                      onChange={(e) => setHasTransportation(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <Label htmlFor="transportation" className="cursor-pointer">
+                      إضافة خدمة المواصلات ({courses.find(c => c.id === selectedCourse)?.monthly_fee ? (courses.find(c => c.id === selectedCourse) as any).transportation_fee : 0} دينار شهرياً)
+                    </Label>
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsEnrollDialogOpen(false)}>

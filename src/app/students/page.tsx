@@ -38,7 +38,8 @@ import {
   PaymentStatus,
   deleteStudent,
   getSystemSettings,
-  SystemSetting
+  SystemSetting,
+  getStudentDuePayments
 } from '@/lib/supabase'
 
 export default function StudentsPage() {
@@ -52,6 +53,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus[]>([])
+  const [studentDuePayments, setStudentDuePayments] = useState<Record<string, any>>({})
   const [settings, setSettings] = useState<SystemSetting[]>([])
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
@@ -84,6 +86,25 @@ export default function StudentsPage() {
       setCourses(coursesData.filter(course => course.status === 'active'))
       setPaymentStatus(paymentStatusData)
       setSettings(settingsData)
+      
+      // جلب المدفوعات المستحقة لكل طالب
+      const duePaymentsMap: Record<string, any> = {}
+      for (const student of studentsData) {
+        try {
+          const duePayments = await getStudentDuePayments(student.id)
+          duePaymentsMap[student.id] = duePayments
+        } catch (error) {
+          console.error(`Error fetching due payments for student ${student.id}:`, error)
+          duePaymentsMap[student.id] = {
+            totalRegistrationDue: 0,
+            totalMonthlyDue: 0,
+            totalDue: 0,
+            registrationFees: [],
+            monthlyPayments: []
+          }
+        }
+      }
+      setStudentDuePayments(duePaymentsMap)
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -305,18 +326,34 @@ export default function StudentsPage() {
   }
 
   const getStudentPaymentInfo = (studentId: string) => {
-    const studentPayments = paymentStatus.filter(ps => ps.student_id === studentId)
-    if (studentPayments.length === 0) return null
+    // استخدام البيانات الجديدة من getStudentDuePayments
+    const duePayments = studentDuePayments[studentId]
+    if (!duePayments) {
+      // fallback للطريقة القديمة
+      const studentPayments = paymentStatus.filter(ps => ps.student_id === studentId)
+      if (studentPayments.length === 0) return null
+      
+      const totalRemaining = studentPayments.reduce((sum, ps) => sum + ps.remaining_amount, 0)
+      const hasOverdue = studentPayments.some(ps => ps.payment_status === 'overdue')
+      const maxMonthsOverdue = Math.max(...studentPayments.map(ps => ps.months_overdue))
+      
+      return {
+        totalRemaining,
+        hasOverdue,
+        maxMonthsOverdue,
+        coursesCount: studentPayments.length
+      }
+    }
     
-    const totalRemaining = studentPayments.reduce((sum, ps) => sum + ps.remaining_amount, 0)
-    const hasOverdue = studentPayments.some(ps => ps.payment_status === 'overdue')
-    const maxMonthsOverdue = Math.max(...studentPayments.map(ps => ps.months_overdue))
+    // استخدام البيانات الشاملة (رسوم تسجيل + أقساط شهرية)
+    const totalRemaining = duePayments.totalDue || 0
+    const hasOverdue = duePayments.monthlyPayments?.length > 0 || duePayments.registrationFees?.length > 0
     
     return {
       totalRemaining,
       hasOverdue,
-      maxMonthsOverdue,
-      coursesCount: studentPayments.length
+      maxMonthsOverdue: duePayments.monthlyPayments?.length || 0,
+      coursesCount: duePayments.registrationFees?.length || 0
     }
   }
 
@@ -502,8 +539,10 @@ export default function StudentsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">بدون دورة</SelectItem>
-                      {courses.map(course => (
-                        <SelectItem key={course.id} value={course.id}>
+                      {courses
+                        .filter(course => course?.id && String(course.id).trim() !== '')
+                        .map(course => (
+                        <SelectItem key={course.id} value={course.id!}>
                           {course.name} - {course.monthly_fee} دينار شهرياً
                         </SelectItem>
                       ))}
@@ -522,8 +561,10 @@ export default function StudentsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">بدون دورة</SelectItem>
-                      {courses.map(course => (
-                        <SelectItem key={course.id} value={course.id}>
+                      {courses
+                        .filter(course => course?.id && String(course.id).trim() !== '')
+                        .map(course => (
+                        <SelectItem key={course.id} value={course.id!}>
                           {course.name} - {course.monthly_fee} دينار
                         </SelectItem>
                       ))}

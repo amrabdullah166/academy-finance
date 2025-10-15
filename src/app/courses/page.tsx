@@ -39,6 +39,8 @@ export default function CoursesPage() {
     name: '',
     description: '',
     monthly_fee: '',
+    registration_fee: '',
+    transportation_fee: '',
     total_sessions: '',
     status: 'active',
     start_date: '',
@@ -137,6 +139,8 @@ export default function CoursesPage() {
         name: formData.name,
         description: formData.description || undefined,
         monthly_fee: parseFloat(formData.monthly_fee),
+        registration_fee: parseFloat(formData.registration_fee) || 0,
+        transportation_fee: parseFloat(formData.transportation_fee) || 0,
         total_sessions: formData.total_sessions ? parseInt(formData.total_sessions) : undefined,
         max_students: formData.max_students ? parseInt(formData.max_students) : undefined,
         start_date: formData.start_date || undefined,
@@ -171,6 +175,8 @@ export default function CoursesPage() {
       name: course.name,
       description: course.description || '',
       monthly_fee: course.monthly_fee.toString(),
+      registration_fee: (course as any).registration_fee?.toString() || '0',
+      transportation_fee: (course as any).transportation_fee?.toString() || '0',
       total_sessions: course.total_sessions?.toString() || '',
       status: course.status,
       start_date: course.start_date || '',
@@ -214,6 +220,8 @@ export default function CoursesPage() {
       name: '',
       description: '',
       monthly_fee: '',
+      registration_fee: '',
+      transportation_fee: '',
       total_sessions: '',
       status: 'active',
       start_date: '',
@@ -304,6 +312,32 @@ export default function CoursesPage() {
                     value={formData.monthly_fee}
                     onChange={(e) => setFormData({...formData, monthly_fee: e.target.value})}
                     required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="registration_fee">رسوم التسجيل</Label>
+                  <Input
+                    id="registration_fee"
+                    type="number"
+                    step="0.01"
+                    value={formData.registration_fee}
+                    onChange={(e) => setFormData({...formData, registration_fee: e.target.value})}
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="transportation_fee">رسوم المواصلات (شهرياً)</Label>
+                  <Input
+                    id="transportation_fee"
+                    type="number"
+                    step="0.01"
+                    value={formData.transportation_fee}
+                    onChange={(e) => setFormData({...formData, transportation_fee: e.target.value})}
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -493,7 +527,9 @@ export default function CoursesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">اسم الكورس</TableHead>
-                <TableHead className="text-right">الرسوم الشهرية</TableHead>
+                <TableHead className="text-right">رسوم شهرية</TableHead>
+                <TableHead className="text-right">رسوم تسجيل</TableHead>
+                <TableHead className="text-right">رسوم مواصلات</TableHead>
                 <TableHead className="text-center">الطلاب المسجلين</TableHead>
                 <TableHead className="text-center">الاشتراكات النشطة</TableHead>
                 <TableHead className="text-right">إجمالي الإيرادات</TableHead>
@@ -514,7 +550,13 @@ export default function CoursesPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right rtl-content">{course.monthly_fee.toLocaleString()} دينار</TableCell>
+                  <TableCell className="text-right rtl-content">{course.monthly_fee.toLocaleString()} د</TableCell>
+                  <TableCell className="text-right rtl-content">
+                    {((course as any).registration_fee || 0).toLocaleString()} د
+                  </TableCell>
+                  <TableCell className="text-right rtl-content">
+                    {((course as any).transportation_fee || 0).toLocaleString()} د
+                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center gap-1 justify-center">
                       <Users className="h-4 w-4" />

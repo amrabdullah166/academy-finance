@@ -243,7 +243,7 @@ export default function PaymentsPage() {
                         <SelectValue placeholder="اختر الدورة" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">بدون دورة محددة</SelectItem>
+                        <SelectItem value="no-course">بدون دورة محددة</SelectItem>
                         {courses.map((course) => (
                           <SelectItem key={course.id} value={course.id}>
                             {course.name}

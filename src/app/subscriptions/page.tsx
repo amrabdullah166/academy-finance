@@ -263,8 +263,10 @@ export default function SubscriptionsPageNew() {
                         <SelectValue placeholder="اختر الطالب" />
                       </SelectTrigger>
                       <SelectContent>
-                        {students.map((student) => (
-                          <SelectItem key={student.id} value={student.id}>
+                        {students
+                          .filter(s => s?.id && String(s.id).trim() !== '')
+                          .map((student) => (
+                          <SelectItem key={student.id} value={student.id!}>
                             {student.name}
                           </SelectItem>
                         ))}
@@ -282,8 +284,10 @@ export default function SubscriptionsPageNew() {
                         <SelectValue placeholder="اختر الدورة" />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses.map((course) => (
-                          <SelectItem key={course.id} value={course.id}>
+                        {courses
+                          .filter(c => c?.id && String(c.id).trim() !== '')
+                          .map((course) => (
+                          <SelectItem key={course.id} value={course.id!}>
                             {course.name} - {course.monthly_fee} دينار
                           </SelectItem>
                         ))}

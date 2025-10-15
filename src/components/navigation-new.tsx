@@ -12,7 +12,8 @@ import {
   Calendar,
   BookOpen,
   Menu,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -37,6 +38,11 @@ const navigationItems = [
     name: 'المدفوعات',
     href: '/payments',
     icon: CreditCard
+  },
+  {
+    name: 'المدفوعات المستحقة',
+    href: '/due-payments',
+    icon: AlertCircle
   },
   {
     name: 'تسجيل الحضور',
