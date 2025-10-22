@@ -443,6 +443,12 @@ export default function Dashboard() {
                   إضافة طالب جديد
                 </Button>
               </Link>
+              <Link href="/enrollments" className="block">
+                <Button className="w-full justify-start text-right" variant="outline" size="sm">
+                  <UserCheck className="ml-2 h-4 w-4" />
+                  تسجيل طالب في دورة
+                </Button>
+              </Link>
               <Link href="/subscriptions" className="block">
                 <Button className="w-full justify-start text-right" variant="outline" size="sm">
                   <Calendar className="ml-2 h-4 w-4" />

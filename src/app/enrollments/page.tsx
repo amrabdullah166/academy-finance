@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -18,7 +19,8 @@ import {
   Calendar,
   DollarSign,
   ArrowLeft,
-  Loader2
+  Loader2,
+  UsersIcon
 } from 'lucide-react'
 import Link from 'next/link'
 import { 
@@ -26,6 +28,8 @@ import {
   getCourses, 
   getStudentCourses,
   enrollStudentInCourse,
+  enrollMultipleStudentsInCourse,
+  unenrollStudentFromCourse,
   Student,
   Course
 } from '@/lib/supabase'
@@ -43,12 +47,15 @@ interface StudentCourse {
 export default function EnrollmentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false)
+  const [isBulkEnrollDialogOpen, setIsBulkEnrollDialogOpen] = useState(false)
   const [students, setStudents] = useState<Student[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [enrollments, setEnrollments] = useState<StudentCourse[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedStudent, setSelectedStudent] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
+  const [bulkCourse, setBulkCourse] = useState('')
   const [hasTransportation, setHasTransportation] = useState(false)
 
   useEffect(() => {
@@ -86,17 +93,133 @@ export default function EnrollmentsPage() {
     }
 
     try {
+      // التحقق من وجود تسجيل سابق
+      const existingEnrollment = enrollments.find(enrollment => 
+        enrollment.student_id === selectedStudent && 
+        enrollment.course_id === selectedCourse
+      )
+
+      if (existingEnrollment && existingEnrollment.status === 'enrolled') {
+        alert('الطالب مسجل بالفعل في هذه الدورة')
+        return
+      }
+
+      if (existingEnrollment && existingEnrollment.status === 'dropped') {
+        const confirmReEnroll = confirm('الطالب كان مسجلاً في هذه الدورة وانسحب منها. هل تريد إعادة تسجيله؟')
+        if (!confirmReEnroll) return
+      }
+
       await enrollStudentInCourse(selectedStudent, selectedCourse, hasTransportation)
       setIsEnrollDialogOpen(false)
       setSelectedStudent('')
       setSelectedCourse('')
       setHasTransportation(false)
       fetchData()
-      alert('تم تسجيل الطالب في الدورة بنجاح')
+      
+      const message = existingEnrollment && existingEnrollment.status === 'dropped' 
+        ? 'تم إعادة تسجيل الطالب في الدورة بنجاح' 
+        : 'تم تسجيل الطالب في الدورة بنجاح'
+      alert(message)
     } catch (error) {
       console.error('Error enrolling student:', error)
-      alert('حدث خطأ أثناء تسجيل الطالب')
+      
+      // معالجة أخطاء قاعدة البيانات
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء تسجيل الطالب'
+      
+      if (errorMessage.includes('duplicate') || errorMessage.includes('unique')) {
+        alert('الطالب مسجل بالفعل في هذه الدورة. لا يمكن تسجيله مرة أخرى.')
+      } else {
+        alert(errorMessage)
+      }
     }
+  }
+
+  const handleReEnroll = async (studentId: string, courseId?: string) => {
+    const targetCourseId = courseId || selectedCourse
+    if (!targetCourseId) return
+    
+    const confirmReEnroll = confirm('هل تريد إعادة تسجيل هذا الطالب في الدورة؟')
+    if (!confirmReEnroll) return
+
+    try {
+      await enrollStudentInCourse(studentId, targetCourseId, hasTransportation)
+      fetchData()
+      alert('تم إعادة تسجيل الطالب في الدورة بنجاح')
+    } catch (error) {
+      console.error('Error re-enrolling student:', error)
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إعادة تسجيل الطالب'
+      alert(errorMessage)
+    }
+  }
+
+  const handleUnenroll = async (studentId: string, courseId: string, studentName: string, courseName: string) => {
+    const confirmUnenroll = confirm(`هل تريد إلغاء تسجيل ${studentName} من دورة ${courseName}؟\n\nسيتم تحويل حالة التسجيل إلى "منسحب" ولكن يمكن إعادة تسجيله لاحقاً.`)
+    if (!confirmUnenroll) return
+
+    const reason = prompt('سبب إلغاء التسجيل (اختياري):') || 'تم إلغاء التسجيل'
+
+    try {
+      await unenrollStudentFromCourse(studentId, courseId, reason)
+      fetchData()
+      alert('تم إلغاء تسجيل الطالب بنجاح')
+    } catch (error) {
+      console.error('Error unenrolling student:', error)
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إلغاء التسجيل'
+      alert(errorMessage)
+    }
+  }
+
+  // التسجيل المتعدد
+  const handleBulkEnrollment = async () => {
+    if (!bulkCourse || selectedStudents.length === 0) {
+      alert('يرجى اختيار الدورة وطالب واحد على الأقل')
+      return
+    }
+
+    const confirmBulk = confirm(`هل تريد تسجيل ${selectedStudents.length} طالب في الدورة المختارة؟`)
+    if (!confirmBulk) return
+
+    try {
+      await enrollMultipleStudentsInCourse(selectedStudents, bulkCourse)
+      setIsBulkEnrollDialogOpen(false)
+      setSelectedStudents([])
+      setBulkCourse('')
+      fetchData()
+      alert(`تم تسجيل ${selectedStudents.length} طالب بنجاح`)
+    } catch (error) {
+      console.error('Error bulk enrolling students:', error)
+      alert('حدث خطأ أثناء التسجيل المتعدد')
+    }
+  }
+
+  const toggleStudentSelection = (studentId: string) => {
+    setSelectedStudents(prev => 
+      prev.includes(studentId) 
+        ? prev.filter(id => id !== studentId)
+        : [...prev, studentId]
+    )
+  }
+
+  const selectAllAvailableStudents = () => {
+    if (!bulkCourse) return
+    
+    const availableStudents = students
+      .filter(student => student.status === 'active')
+      .filter(student => {
+        const hasActiveEnrollment = enrollments.some(enrollment => 
+          enrollment.student_id === student.id && 
+          enrollment.course_id === bulkCourse && 
+          enrollment.status === 'enrolled'
+        )
+        return !hasActiveEnrollment
+      })
+      .map(student => student.id)
+    
+    setSelectedStudents(availableStudents)
+  }
+
+  const clearStudentSelection = () => {
+    setSelectedStudents([])
   }
 
   const filteredEnrollments = enrollments.filter(enrollment => {
@@ -151,13 +274,135 @@ export default function EnrollmentsPage() {
               </p>
             </div>
           </div>
-          <Dialog open={isEnrollDialogOpen} onOpenChange={setIsEnrollDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg">
-                <UserPlus className="h-4 w-4 ml-2" />
-                تسجيل طالب في دورة
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-3">
+            <Dialog open={isBulkEnrollDialogOpen} onOpenChange={setIsBulkEnrollDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" variant="outline">
+                  <UsersIcon className="h-4 w-4 ml-2" />
+                  تسجيل متعدد
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>تسجيل عدة طلاب في دورة</DialogTitle>
+                  <DialogDescription>
+                    اختر الدورة ثم حدد الطلاب المراد تسجيلهم
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  {/* اختيار الدورة */}
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk-course">الدورة</Label>
+                    <Select value={bulkCourse} onValueChange={setBulkCourse}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر دورة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courses
+                          .filter(c => c?.id && String(c.id).trim() !== '')
+                          .map(course => (
+                          <SelectItem key={course.id} value={course.id!}>
+                            {course.name} - {course.monthly_fee} دينار شهرياً
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* قائمة الطلاب */}
+                  {bulkCourse && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>الطلاب المتاحين ({
+                          students
+                            .filter(student => student.status === 'active')
+                            .filter(student => {
+                              const hasActiveEnrollment = enrollments.some(enrollment => 
+                                enrollment.student_id === student.id && 
+                                enrollment.course_id === bulkCourse && 
+                                enrollment.status === 'enrolled'
+                              )
+                              return !hasActiveEnrollment
+                            }).length
+                        })</Label>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={selectAllAvailableStudents}
+                          >
+                            تحديد الكل
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={clearStudentSelection}
+                          >
+                            إلغاء التحديد
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="border rounded-lg max-h-60 overflow-y-auto">
+                        <div className="p-3 space-y-2">
+                          {students
+                            .filter(student => student.status === 'active')
+                            .filter(student => {
+                              const hasActiveEnrollment = enrollments.some(enrollment => 
+                                enrollment.student_id === student.id && 
+                                enrollment.course_id === bulkCourse && 
+                                enrollment.status === 'enrolled'
+                              )
+                              return !hasActiveEnrollment
+                            })
+                            .map(student => (
+                              <div key={student.id} className="flex items-center space-x-2 space-x-reverse p-2 hover:bg-gray-50 rounded">
+                                <Checkbox
+                                  id={`student-${student.id}`}
+                                  checked={selectedStudents.includes(student.id)}
+                                  onCheckedChange={() => toggleStudentSelection(student.id)}
+                                />
+                                <Label htmlFor={`student-${student.id}`} className="flex-1 cursor-pointer">
+                                  <div>
+                                    <div className="font-medium">{student.name}</div>
+                                    <div className="text-sm text-gray-500">{student.phone}</div>
+                                  </div>
+                                </Label>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                      
+                      {selectedStudents.length > 0 && (
+                        <div className="text-sm text-blue-600 font-medium">
+                          تم تحديد {selectedStudents.length} طالب
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsBulkEnrollDialogOpen(false)}>
+                      إلغاء
+                    </Button>
+                    <Button 
+                      onClick={handleBulkEnrollment}
+                      disabled={!bulkCourse || selectedStudents.length === 0}
+                    >
+                      تسجيل {selectedStudents.length > 0 ? `(${selectedStudents.length})` : ''} طالب
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isEnrollDialogOpen} onOpenChange={setIsEnrollDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg">
+                  <UserPlus className="h-4 w-4 ml-2" />
+                  تسجيل طالب في دورة
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>تسجيل طالب في دورة</DialogTitle>
@@ -175,6 +420,19 @@ export default function EnrollmentsPage() {
                     <SelectContent>
                       {students
                         .filter(s => s?.id && String(s.id).trim() !== '')
+                        .filter(student => {
+                          // إذا لم يتم اختيار دورة بعد، اعرض جميع الطلاب
+                          if (!selectedCourse) return true
+                          
+                          // تحقق من عدم وجود تسجيل نشط للطالب في هذه الدورة
+                          const hasActiveEnrollment = enrollments.some(enrollment => 
+                            enrollment.student_id === student.id && 
+                            enrollment.course_id === selectedCourse && 
+                            enrollment.status === 'enrolled'
+                          )
+                          
+                          return !hasActiveEnrollment
+                        })
                         .map(student => (
                         <SelectItem key={student.id} value={student.id!}>
                           {student.name} - {student.phone}
@@ -182,6 +440,18 @@ export default function EnrollmentsPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {selectedCourse && students.filter(s => s?.id && String(s.id).trim() !== '').filter(student => {
+                    const hasActiveEnrollment = enrollments.some(enrollment => 
+                      enrollment.student_id === student.id && 
+                      enrollment.course_id === selectedCourse && 
+                      enrollment.status === 'enrolled'
+                    )
+                    return !hasActiveEnrollment
+                  }).length === 0 && (
+                    <p className="text-sm text-amber-600 mt-1">
+                      جميع الطلاب مسجلين بالفعل في هذه الدورة
+                    </p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -218,6 +488,39 @@ export default function EnrollmentsPage() {
                   </div>
                 )}
 
+                {/* قسم الطلاب المنسحبين */}
+                {selectedCourse && (
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <h4 className="text-sm font-medium text-yellow-800 mb-2">الطلاب المنسحبين من هذه الدورة:</h4>
+                    {enrollments
+                      .filter(enrollment => 
+                        enrollment.course_id === selectedCourse && 
+                        enrollment.status === 'dropped'
+                      )
+                      .map(enrollment => {
+                        const student = students.find(s => s.id === enrollment.student_id)
+                        return student ? (
+                          <div key={enrollment.id} className="flex items-center justify-between text-sm py-1">
+                            <span>{student.name}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReEnroll(student.id)}
+                            >
+                              إعادة تسجيل
+                            </Button>
+                          </div>
+                        ) : null
+                      })}
+                    {enrollments.filter(enrollment => 
+                      enrollment.course_id === selectedCourse && 
+                      enrollment.status === 'dropped'
+                    ).length === 0 && (
+                      <p className="text-sm text-yellow-700">لا توجد انسحابات من هذه الدورة</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsEnrollDialogOpen(false)}>
                     إلغاء
@@ -229,6 +532,7 @@ export default function EnrollmentsPage() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </div>
 
@@ -355,12 +659,25 @@ export default function EnrollmentsPage() {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => {
-                              // يمكن إضافة وظيفة إلغاء التسجيل هنا
-                              alert('وظيفة إلغاء التسجيل قيد التطوير')
-                            }}
+                            onClick={() => handleUnenroll(
+                              enrollment.student_id,
+                              enrollment.course_id,
+                              enrollment.students?.name || 'الطالب',
+                              enrollment.courses?.name || 'الدورة'
+                            )}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <UserMinus className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {enrollment.status === 'dropped' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleReEnroll(enrollment.student_id, enrollment.course_id)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <UserPlus className="h-4 w-4" />
                           </Button>
                         )}
                       </div>

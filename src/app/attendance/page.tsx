@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Calendar, Check, X, Users, Clock, BookOpen, Save, RefreshCw } from 'lucide-react'
+import { Calendar, Check, X, Users, Clock, BookOpen, Save, RefreshCw, BarChart3 } from 'lucide-react'
+import Link from 'next/link'
 import { 
   getStudents, 
   getCourses, 
@@ -66,7 +67,10 @@ export default function AttendancePage() {
   }
 
   const loadCourseStudents = async () => {
-    if (!selectedCourse) return
+    if (!selectedCourse || selectedCourse.trim() === '') {
+      setStudentsAttendance([])
+      return
+    }
     
     setLoading(true)
     try {
@@ -177,20 +181,30 @@ export default function AttendancePage() {
           </p>
         </div>
         
-        {selectedCourse && (
-          <Button 
-            onClick={saveAttendance} 
-            disabled={saving || stats.notMarked === stats.total}
-            className="flex items-center gap-2"
-          >
-            {saving ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            حفظ الحضور ({stats.present + stats.absent} من {stats.total})
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {/* زر تتبع الحضور */}
+          <Link href="/attendance-tracking">
+            <Button variant="outline" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              تتبع الحضور
+            </Button>
+          </Link>
+          
+          {selectedCourse && (
+            <Button 
+              onClick={saveAttendance} 
+              disabled={saving || stats.notMarked === stats.total}
+              className="flex items-center gap-2"
+            >
+              {saving ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              حفظ الحضور ({stats.present + stats.absent} من {stats.total})
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Controls */}

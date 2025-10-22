@@ -35,6 +35,11 @@ const navigationItems = [
     icon: BookOpen
   },
   {
+    name: 'تسجيل الطلاب',
+    href: '/enrollments',
+    icon: UserCheck
+  },
+  {
     name: 'المدفوعات',
     href: '/payments',
     icon: CreditCard
@@ -48,11 +53,6 @@ const navigationItems = [
     name: 'تسجيل الحضور',
     href: '/attendance',
     icon: UserCheck
-  },
-  {
-    name: 'تتبع الحضور',
-    href: '/attendance-tracking',
-    icon: BarChart3
   },
   {
     name: 'الاشتراكات الشهرية',

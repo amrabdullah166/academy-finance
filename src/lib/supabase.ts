@@ -27,7 +27,11 @@ const safeSupabaseOperation = async <T = unknown>(operation: () => Promise<T>, f
     const result = await operation()
     return result || getMockData(fallbackType) as T
   } catch (error) {
-    console.error('Supabase operation failed:', error)
+    console.error('Supabase operation failed for', fallbackType, ':', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      details: error instanceof Error ? error.stack : error,
+      fallbackType
+    })
     return getMockData(fallbackType) as T
   }
 }
@@ -853,27 +857,68 @@ export const enrollStudentInCourse = async (
   const monthlyFee = course.monthly_fee + (hasTransportation ? (course.transportation_fee || 0) : 0)
   const registrationFee = course.registration_fee || 0
   
-  const { data, error } = await supabase
+  // Check for existing enrollment
+  const { data: existingEnrollment } = await supabase
     .from('student_courses')
-    .insert([{
-      student_id: studentId,
-      course_id: courseId,
-      enrollment_date: new Date().toISOString().split('T')[0],
-      status: 'enrolled',
-      has_transportation: hasTransportation,
-      monthly_fee: monthlyFee,
-      registration_fee: registrationFee,
-      registration_fee_paid: false
-    }])
-    .select(`
-      *,
-      students (name),
-      courses (name, monthly_fee, registration_fee, transportation_fee)
-    `)
-    .single()
+    .select('id, status')
+    .eq('student_id', studentId)
+    .eq('course_id', courseId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
   
-  if (error) throw error
-  return data
+  if (existingEnrollment) {
+    if (existingEnrollment.status === 'enrolled') {
+      throw new Error('الطالب مسجل بالفعل في هذه الدورة')
+    }
+    
+    // إعادة تفعيل التسجيل الموجود
+    const { data, error } = await supabase
+      .from('student_courses')
+      .update({
+        status: 'enrolled',
+        enrollment_date: new Date().toISOString().split('T')[0],
+        completion_date: null,
+        has_transportation: hasTransportation,
+        monthly_fee: monthlyFee,
+        registration_fee: registrationFee,
+        registration_fee_paid: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingEnrollment.id)
+      .select(`
+        *,
+        students (name),
+        courses (name, monthly_fee, registration_fee, transportation_fee)
+      `)
+      .single()
+    
+    if (error) throw error
+    return data
+  } else {
+    // إنشاء تسجيل جديد
+    const { data, error } = await supabase
+      .from('student_courses')
+      .insert([{
+        student_id: studentId,
+        course_id: courseId,
+        enrollment_date: new Date().toISOString().split('T')[0],
+        status: 'enrolled',
+        has_transportation: hasTransportation,
+        monthly_fee: monthlyFee,
+        registration_fee: registrationFee,
+        registration_fee_paid: false
+      }])
+      .select(`
+        *,
+        students (name),
+        courses (name, monthly_fee, registration_fee, transportation_fee)
+      `)
+      .single()
+    
+    if (error) throw error
+    return data
+  }
 }
 
 // إضافة عدة طلاب للكورس دفعة واحدة
@@ -896,6 +941,54 @@ export const enrollMultipleStudentsInCourse = async (studentIds: string[], cours
   
   if (error) throw error
   return data
+}
+
+// إلغاء تسجيل طالب من دورة (تغيير الحالة إلى dropped)
+export const unenrollStudentFromCourse = async (
+  studentId: string, 
+  courseId: string, 
+  reason?: string
+) => {
+  return await safeSupabaseOperation(async () => {
+    // البحث عن التسجيل النشط
+    const { data: existingEnrollment, error: findError } = await supabase
+      .from('student_courses')
+      .select('id, status')
+      .eq('student_id', studentId)
+      .eq('course_id', courseId)
+      .eq('status', 'enrolled')
+      .single()
+    
+    if (findError || !existingEnrollment) {
+      throw new Error('لم يتم العثور على تسجيل نشط للطالب في هذه الدورة')
+    }
+
+    // تحديث حالة التسجيل إلى منسحب
+    const { data, error } = await supabase
+      .from('student_courses')
+      .update({
+        status: 'dropped',
+        completion_date: new Date().toISOString().split('T')[0],
+        notes: reason || 'تم إلغاء التسجيل',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingEnrollment.id)
+      .select(`
+        *,
+        students (name),
+        courses (name)
+      `)
+      .single()
+    
+    if (error) throw error
+
+    // يمكن إضافة منطق إضافي هنا مثل:
+    // - إلغاء المدفوعات المستقبلية
+    // - إرسال إشعار للطالب
+    // - تحديث الإحصائيات
+
+    return data
+  }, 'enrollment')
 }
 
 export const getStudentsByCoursea = async (courseId: string) => {
@@ -924,16 +1017,6 @@ export const getCoursesByStudent = async (studentId: string) => {
   
   if (error) throw error
   return data
-}
-
-export const unenrollStudentFromCourse = async (studentId: string, courseId: string) => {
-  const { error } = await supabase
-    .from('student_courses')
-    .update({ status: 'dropped' })
-    .eq('student_id', studentId)
-    .eq('course_id', courseId)
-  
-  if (error) throw error
 }
 
 // Advanced Analytics Functions
@@ -1661,6 +1744,11 @@ export const getStudentAttendance = async (studentId: string, startDate?: string
 
 // دالة لجلب الحضور لكورس معين في تاريخ معين
 export const getCourseAttendance = async (courseId: string, date: string): Promise<Attendance[]> => {
+  if (!courseId || !date) {
+    console.warn('getCourseAttendance called with invalid parameters:', { courseId, date })
+    return []
+  }
+  
   return await safeSupabaseOperation(async () => {
     const { data, error } = await supabase
       .from('attendance')
@@ -1674,7 +1762,7 @@ export const getCourseAttendance = async (courseId: string, date: string): Promi
       `)
       .eq('course_id', courseId)
       .eq('attendance_date', date)
-      .order('students.name', { ascending: true })
+      .order('created_at', { ascending: true })
     
     if (error) throw error
     return data || []
